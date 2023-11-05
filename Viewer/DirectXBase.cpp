@@ -41,7 +41,7 @@ void DirectXBase::Initialize(WinApp* winapp)
 	//レンダーターゲットビュー当たりの初期化
 	InitializeRenderTargetView();
 	//深度バッファの初期化
-	InitializeDepthBuffer();
+	//InitializeDepthBuffer();
 	//フェンス生成
 	InitializeFence();
 }
@@ -128,13 +128,13 @@ void DirectXBase::InitializeSwapchain()
 	RECT rect;
 	GetClientRect(winapp->GetHwnd(), &rect);
 
-	int width = rect.right - rect.left;
-	int height =  rect.bottom- rect.top;
+	int width = 1280;// rect.right - rect.left;
+	int height = 720;// rect.bottom - rect.top;
 	
 	//スワップチェーンの生成
 	DXGI_SWAP_CHAIN_DESC1 swapchainDesc{};
-	swapchainDesc.Width = width;
-	swapchainDesc.Height = height;
+	swapchainDesc.Width = 1280;
+	swapchainDesc.Height = 720;
 	swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapchainDesc.SampleDesc.Count = 1;
 	swapchainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
@@ -178,7 +178,7 @@ void DirectXBase::InitializeDepthBuffer()
 	HRESULT result;
 
 	m_DepthResDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-		DXGI_FORMAT_D32_FLOAT, 780, 500, 1, 0, 1, 0,
+		DXGI_FORMAT_D32_FLOAT, 1280, 720, 1, 0, 1, 0,
 		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
 	);
 
@@ -212,21 +212,33 @@ void DirectXBase::InitializeFence()
 void DirectXBase::BeginDraw()
 {
 	//バックバッファの番号取得
-	UINT bbIndex = swapchain->GetCurrentBackBufferIndex();
-	//リソースバリアを書き込み用に
-	m_CmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_Backbuffers[bbIndex].Get(),
-		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET));
+	//UINT bbIndex = swapchain->GetCurrentBackBufferIndex();
+	
+	auto bbIdx = swapchain->GetCurrentBackBufferIndex();
+
+	D3D12_RESOURCE_BARRIER BarrierDesc = {};
+	BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	BarrierDesc.Transition.pResource = m_Backbuffers[bbIdx].Get();
+	BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	m_CmdList->ResourceBarrier(1, &BarrierDesc);
 
 	//クリアコマンド
 	//描画先指定
-	auto rtvH = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_RtvHeaps->GetCPUDescriptorHandleForHeapStart(),
-		bbIndex, m_Device->GetDescriptorHandleIncrementSize(
-			D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+	//auto rtvH = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_RtvHeaps->GetCPUDescriptorHandleForHeapStart(),
+		//bbIdx, m_Device->GetDescriptorHandleIncrementSize(
+			//D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
 
+		//レンダーターゲットを指定
+	auto rtvH = m_RtvHeaps->GetCPUDescriptorHandleForHeapStart();
+	rtvH.ptr += bbIdx * m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	m_CmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
 	//深度ステンシルビュー用でスクリプタヒープ
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvH = m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
-	m_CmdList->OMSetRenderTargets(1, &rtvH, false, &dsvH);
+//	D3D12_CPU_DESCRIPTOR_HANDLE dsvH = m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
+//	m_CmdList->OMSetRenderTargets(1, &rtvH, false, &dsvH);
 
 	///////
 	///
@@ -235,19 +247,7 @@ void DirectXBase::BeginDraw()
 	//レンダーターゲット　クリア
 	m_CmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
 	//深度バッファ　クリア
-	m_CmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-	//viewポート領域の設定
-
-	RECT rect;
-	GetClientRect(winapp->GetHwnd(), &rect);
-
-	int width = rect.right - rect.left;
-	int height = rect.bottom - rect.top;
-
-	m_CmdList->RSSetViewports(1, &CD3DX12_VIEWPORT(0.0f, 0.0f, 780,500));
-	//シザー短形の設定
-	m_CmdList->RSSetScissorRects(1, &CD3DX12_RECT(static_cast<LONG>(0.0f), static_cast<LONG>(0.0f), static_cast<LONG>(700),
-		static_cast<LONG>(500)));
+	//m_CmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 #pragma endregion
 
@@ -264,8 +264,7 @@ void DirectXBase::EndDraw()
 	ID3D12CommandList* cmdLists[] = { m_CmdList.Get() }; // コマンドリストの配列
 	m_CmdQueue->ExecuteCommandLists(1, cmdLists);
 
-	// バッファをフリップ（裏表の入替え）
-	swapchain->Present(1, 0);
+	
 
 	// コマンドリストの実行完了を待つ
 	m_CmdQueue->Signal(m_Fence.Get(), ++fenceVal);
@@ -275,9 +274,11 @@ void DirectXBase::EndDraw()
 		WaitForSingleObject(event, INFINITE);
 		CloseHandle(event);
 	}
-	
+
 	m_CmdAllocator->Reset(); // キューをクリア
 	m_CmdList->Reset(m_CmdAllocator.Get(), nullptr);  // 再びコマンドリストを貯める準備
+	// バッファをフリップ（裏表の入替え）
+	swapchain->Present(1, 0);
 }
 #pragma endregion
 //

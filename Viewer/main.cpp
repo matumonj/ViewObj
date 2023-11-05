@@ -1,3 +1,4 @@
+#include <cassert>
 #include <windows.h>
 #include <chrono>
 #include"ReadBinary.h"
@@ -23,9 +24,10 @@ int32_t WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int32_t)
 	dxbase = new DirectXBase();
 	dxbase->Initialize(winApp);
 
-	if (Object3d::SetDevice(dxbase->GetDev())) {
+	if (Object3d::SetDevice(dxbase->GetDev()) && Object3d::SetCommandList(dxbase->GetCmdList())) {
 		Object3d::CommonInit();
 	}
+	else { assert(0); }
 	//描画シーンの初期化
 	scene = new ViewScene();
 	scene->Initialize();
@@ -38,11 +40,10 @@ int32_t WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int32_t)
 
 		//シーンの更新
 		scene->Update();
-
 		//シーン描画
 		scene->Draw(dxbase);
 	}
-	delete dxbase;
-	delete scene;
+	//delete dxbase;
+	//delete scene;
 	delete winApp;
 }

@@ -1,5 +1,5 @@
 #include "ViewScene.h"
-
+#include"Object3d.h"
 void ViewScene::Initialize()
 {
 	//ƒoƒCƒiƒŠ‚Ì“Ç‚Ýž‚Ý
@@ -15,7 +15,8 @@ void ViewScene::Update()
 void ViewScene::Draw(DirectXBase*dxbase)
 {
 	dxbase->BeginDraw();
-
+	Object3d::BeginDraw();
 	dxbase->EndDraw();
+	
 }
 
