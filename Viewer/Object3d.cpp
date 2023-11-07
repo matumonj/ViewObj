@@ -58,15 +58,15 @@ void Object3d::CreateVBView()
 {
 	HRESULT result = S_FALSE;
 	XMFLOAT3 vertices[] = {
-	{-0.04f,-0.03f,0.f},
-	{-0.04f,0.03f,0.f},
-	{0.04f,-0.03f,0.f},
-	{0.04f,0.03f,0.f}
+	{-0.5f,-0.5f,0.f},
+	{+0.5f,+0.5f,0.f},
+	{+0.5f,-0.5f,0.f},
+	//{0.4f,0.3f,0.f}
 	};
 
 	unsigned short indices[] = {
 	0,1,2,
-	2,1,3
+	//,1,3
 	};
 	//プロパティ設定
 	D3D12_HEAP_PROPERTIES heap_properties = {};
@@ -193,7 +193,7 @@ void Object3d::CreatePipelineState()
 	// 頂点レイアウト
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
 		{
-			"POSITION",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,
+			"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,
 			D3D12_APPEND_ALIGNED_ELEMENT,
 			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0
 		},
@@ -312,7 +312,7 @@ void Object3d::ViewPortsetting()
 {
 	
 
-	constexpr float window_w = 280;
+	constexpr float window_w = 1280;
 	constexpr float window_h = 720;
 
 	//画面サイズ・左上座標
@@ -324,7 +324,7 @@ void Object3d::ViewPortsetting()
 	viewport.MaxDepth = 1.0f;
 	viewport.MinDepth = 0.f;
 
-	m_CmdList->RSSetViewports(1, &CD3DX12_VIEWPORT(0.0f, 0.0f, WinApp::window_width/2, WinApp::window_height/2));
+	m_CmdList->RSSetViewports(1, &CD3DX12_VIEWPORT(0.0f, 0.0f, WinApp::window_width, WinApp::window_height));
 
 }
 
