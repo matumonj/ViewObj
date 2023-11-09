@@ -1,54 +1,32 @@
 #include "DirectXBase.h"
 
+#include <cassert>
 #include <string>
 #include <vector>
-//#include<dxgidebug.h>
-//
-//DirectXBase* DirectXBase::GetIns()
-//{
-	//static DirectXBase instance;
 
-//	return &instance;
-//}
-//
-DirectXBase::~DirectXBase()
-{
-	//pddebug->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
-}
-//
+
 void DirectXBase::Initialize(WinApp* winapp)
 {
-	//でバッグレイヤーのやつ
-//#ifdef _DEBUG
-//		//ComPtr<ID3D12DebugDevice> pddebug;
-//
-//	ID3D12Debug1* debugController;
-//	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
-//		debugController->EnableDebugLayer();
-//		debugController->SetEnableGPUBasedValidation(TRUE);
-//	}
-//#endif
-//
-//	//assert(winapp);
 	this->winapp = winapp;
+	if (FAILED(winapp))assert(0);
+
 	//デバイスの生成
 	InitializeDevice();
 	//コマンド関連の初期化
 	InitializeCommand();
 	//スワップチェーン周りの初期化
 	InitializeSwapchain();
-
 	//レンダーターゲットビュー当たりの初期化
 	InitializeRenderTargetView();
 	//深度バッファの初期化
-	//InitializeDepthBuffer();
+
 	//フェンス生成
 	InitializeFence();
 }
 //デバイスの生成
 void DirectXBase::InitializeDevice()
 {
-	HRESULT result;
+	HRESULT result=S_FALSE;
 	//dxgiファクトリーの生成
 	result = CreateDXGIFactory1(IID_PPV_ARGS(&m_DxgiFactory));
 
@@ -96,13 +74,13 @@ void DirectXBase::InitializeDevice()
 			break;
 		}
 	}
-	result = m_Device->QueryInterface(pddebug.GetAddressOf());
 }
-//
+
 // コマンド関連の初期化
 void DirectXBase::InitializeCommand()
 {
-	HRESULT result;
+	HRESULT result=S_FALSE;
+
 	result = m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
 		IID_PPV_ARGS(&m_CmdAllocator));
 
@@ -128,13 +106,13 @@ void DirectXBase::InitializeSwapchain()
 	RECT rect;
 	GetClientRect(winapp->GetHwnd(), &rect);
 
-	int width = 1280;// rect.right - rect.left;
-	int height = 720;// rect.bottom - rect.top;
+	int width =WinApp::window_width;
+	int height = WinApp::window_height;
 	
 	//スワップチェーンの生成
 	DXGI_SWAP_CHAIN_DESC1 swapchainDesc{};
-	swapchainDesc.Width = 1280;
-	swapchainDesc.Height = 720;
+	swapchainDesc.Width = width;
+	swapchainDesc.Height = height;
 	swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapchainDesc.SampleDesc.Count = 1;
 	swapchainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
@@ -143,8 +121,8 @@ void DirectXBase::InitializeSwapchain()
 	swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	m_DxgiFactory->CreateSwapChainForHwnd(m_CmdQueue.Get(), winapp->GetHwnd(), &swapchainDesc, nullptr, nullptr,
-		&m_Swapchain1);
-	m_Swapchain1.As(&swapchain);
+		&m_Swapchain2);
+	m_Swapchain2.As(&m_Swapchain);
 }
 
 // レンダーターゲット周りの初期化
@@ -164,7 +142,7 @@ void DirectXBase::InitializeRenderTargetView()
 	for (int i = 0; i < 2; i++)
 	{
 		//スワップチェインのバッファー
-		result = swapchain->GetBuffer(i, IID_PPV_ARGS(&m_Backbuffers[i]));
+		result = m_Swapchain->GetBuffer(i, IID_PPV_ARGS(&m_Backbuffers[i]));
 		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_RtvHeaps->GetCPUDescriptorHandleForHeapStart(),
 			i, m_Device->GetDescriptorHandleIncrementSize(heapDesc.Type));
 
@@ -178,7 +156,7 @@ void DirectXBase::InitializeDepthBuffer()
 	HRESULT result;
 
 	m_DepthResDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-		DXGI_FORMAT_D32_FLOAT, 1280, 720, 1, 0, 1, 0,
+		DXGI_FORMAT_D32_FLOAT, WinApp::window_width, WinApp::window_height, 1, 0, 1, 0,
 		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
 	);
 
@@ -198,24 +176,22 @@ void DirectXBase::InitializeDepthBuffer()
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	m_Device->CreateDepthStencilView(m_DepthBuffer.Get(), &dsvDesc, m_DsvHeap->GetCPUDescriptorHandleForHeapStart());
 }
-//#pragma endregion
-//
-//#pragma region フェンス生成
+
+// フェンス生成
 void DirectXBase::InitializeFence()
 {
-	HRESULT result;
+	HRESULT result=S_FALSE;
+
 	result = m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence));
 }
-//#pragma endregion
-//
-//#pragma region 描画前処理
+
+// 描画前処理
 void DirectXBase::BeginDraw()
 {
 	//バックバッファの番号取得
-	//UINT bbIndex = swapchain->GetCurrentBackBufferIndex();
-	
-	auto bbIdx = swapchain->GetCurrentBackBufferIndex();
+	auto bbIdx = m_Swapchain->GetCurrentBackBufferIndex();
 
+	//リソースバリア設定
 	D3D12_RESOURCE_BARRIER BarrierDesc = {};
 	BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -226,36 +202,22 @@ void DirectXBase::BeginDraw()
 
 	m_CmdList->ResourceBarrier(1, &BarrierDesc);
 
-	//クリアコマンド
-	//描画先指定
-	//auto rtvH = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_RtvHeaps->GetCPUDescriptorHandleForHeapStart(),
-		//bbIdx, m_Device->GetDescriptorHandleIncrementSize(
-			//D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
-
-		//レンダーターゲットを指定
+	//レンダーターゲットを指定
 	auto rtvH = m_RtvHeaps->GetCPUDescriptorHandleForHeapStart();
 	rtvH.ptr += bbIdx * m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	m_CmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
-	//深度ステンシルビュー用でスクリプタヒープ
-//	D3D12_CPU_DESCRIPTOR_HANDLE dsvH = m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
-//	m_CmdList->OMSetRenderTargets(1, &rtvH, false, &dsvH);
 
-	///////
-	///
 	//画面クリア　描画色の指定
 	float clearColor[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 	//レンダーターゲット　クリア
 	m_CmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
-	//深度バッファ　クリア
-	//m_CmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
-#pragma endregion
 
-#pragma region 描画後処理
+// 描画後処理
 void DirectXBase::EndDraw()
 {
 	// バックバッファの番号を取得（2つなので0番か1番）
-	UINT bbIndex = swapchain->GetCurrentBackBufferIndex();
+	UINT bbIndex = m_Swapchain->GetCurrentBackBufferIndex();
 	m_CmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_Backbuffers[bbIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	// 命令のクローズ
@@ -276,17 +238,7 @@ void DirectXBase::EndDraw()
 	}
 
 	m_CmdAllocator->Reset(); // キューをクリア
-	m_CmdList->Reset(m_CmdAllocator.Get(), nullptr);  // 再びコマンドリストを貯める準備
+	m_CmdList->Reset(m_CmdAllocator.Get(), nullptr);
 	// バッファをフリップ（裏表の入替え）
-	swapchain->Present(1, 0);
+	m_Swapchain->Present(1, 0);
 }
-#pragma endregion
-//
-//
-//void DirectXBase::ClearDepthBuffer(ID3D12GraphicsCommandList* cmdList)
-//{
-//	// 深度ステンシルビュー用デスクリプタヒープのハンドルを取得
-//	auto dsvH = CD3DX12_CPU_DESCRIPTOR_HANDLE(dsvHeap->GetCPUDescriptorHandleForHeapStart());
-//	// 深度バッファのクリア
-//	this->cmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-//}
