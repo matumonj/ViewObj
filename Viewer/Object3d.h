@@ -23,8 +23,8 @@ private:
 	}m_header;
 #pragma pack()
 	//‰¼«“Iƒƒ“ƒo
-	//static XMFLOAT3 vertices[3];
-	//static XMFLOAT3 indeces[3];
+	static std::vector<XMFLOAT3> vertices;
+	static std::vector<unsigned short>indeces;
 	static ComPtr<ID3DBlob>m_VsBlob;
 	static ComPtr<ID3DBlob>m_PsBlob;
 	static ComPtr<ID3D12RootSignature>m_RootSignature;

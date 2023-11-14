@@ -59,14 +59,14 @@ void Object3d::CreateVBView()
 	HRESULT result = S_FALSE;
 	XMFLOAT3 vertices[] = {
 	{-0.5f,-0.5f,0.f},
-	{+0.5f,+0.5f,0.f},
+	{-0.5f,+0.5f,0.f},
 	{+0.5f,-0.5f,0.f},
-	//{0.4f,0.3f,0.f}
+	{+0.5f,0.5f,0.f}
 	};
 
 	unsigned short indices[] = {
 	0,1,2,
-	//,1,3
+	2,1,3
 	};
 	//プロパティ設定
 	D3D12_HEAP_PROPERTIES heap_properties = {};
@@ -117,7 +117,7 @@ void Object3d::CreateVBView()
 	//頂点の全バイト数
 	vertex_buffer_view.SizeInBytes = sizeof(vertices);
 	//1頂点あたりの
-	vertex_buffer_view.StrideInBytes = sizeof(vertices[0]);
+	vertex_buffer_view.StrideInBytes = sizeof(XMFLOAT3);
 
 	ID3D12Resource* idxBuff = nullptr;
 	//設定は、バッファのサイズ以外頂点バッファの設定を使いまわして
@@ -356,5 +356,5 @@ void Object3d::BeginDraw()
 	m_CmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_CmdList->IASetVertexBuffers(0, 1, &vertex_buffer_view);
 	m_CmdList->IASetIndexBuffer(&ibView);
-	m_CmdList->DrawInstanced(6, 1, 0, 0);
+	m_CmdList->DrawIndexedInstanced(6, 1, 0, 0,0);
 }
