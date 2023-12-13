@@ -1,4 +1,6 @@
 #include "ViewScene.h"
+
+#include "Camera.h"
 #include"Object3d.h"
 void ViewScene::Initialize()
 {
@@ -9,7 +11,8 @@ void ViewScene::Initialize()
 
 void ViewScene::Update()
 {
-	
+	Camera::GetIns()->Update();
+	Object3d::Update();
 }
 
 void ViewScene::Draw(DirectXBase*dxbase)

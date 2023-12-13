@@ -4,6 +4,8 @@
 #include"ReadBinary.h"
 #include "WinApp.h"
 #include <wrl.h>
+
+#include "Camera.h"
 #include"ViewScene.h"
 #include"Object3d.h"
 using namespace Microsoft::WRL;
@@ -20,6 +22,7 @@ int32_t WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int32_t)
 	dxbase = new DirectXBase();
 	dxbase->Initialize(winApp);
 
+	Camera::GetIns()->ParamInit();
 	
 	if (Object3d::SetDevice(dxbase->GetDev()) && Object3d::SetCommandList(dxbase->GetCmdList())) {
 		Object3d::CommonInit();

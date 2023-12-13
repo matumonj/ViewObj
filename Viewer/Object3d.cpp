@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include "Camera.h"
 #include "WinApp.h"
 
 ID3D12Device*Object3d::m_Device = nullptr;
@@ -18,7 +19,7 @@ D3D12_INDEX_BUFFER_VIEW Object3d::ibView={};
 D3D12_VERTEX_BUFFER_VIEW Object3d::vertex_buffer_view={};
 D3D12_ROOT_PARAMETER Object3d::rootParam = {};
 ID3D12DescriptorHeap* Object3d::cbvDescHeap = nullptr;
-
+ComPtr<ID3D12Resource>Object3d::constBuffer = nullptr;
 bool Object3d::SetDevice(ID3D12Device* device)
 {
 	m_Device = device;
@@ -58,6 +59,43 @@ void Object3d::CommonInit()
 }
 
 //
+// 更新
+//
+void Object3d::Update()
+{
+	HRESULT result = S_FALSE;
+
+	// 定数バッファへのデータ転送
+	ConstBuffer* constMap = nullptr;
+	result = constBuffer->Map(0, nullptr, (void**)&constMap);
+	constMap->Color_ = XMFLOAT4(0, 0, 0, 1);//色
+
+	{
+		XMMATRIX matWorld, matScale, matRot,matTrans;
+		matWorld = XMMatrixIdentity();//単位行列
+		//透視投影変換行列
+
+		//拡大・縮小
+		matScale = XMMatrixScaling(1.f, 0.5f, 1.f);
+		matWorld *= matScale;
+
+		// 回転
+		matRot = XMMatrixIdentity();
+		//matRot *= XMMatrixRotationX(XMConvertToRadians(45.f));
+		//matRot *= XMMatrixRotationY(XMConvertToRadians(45.f));
+		//matRot *= XMMatrixRotationZ(XMConvertToRadians(45.f));
+		matWorld *= matRot;
+
+		// 平行移動
+		matTrans = XMMatrixTranslation(50.f, 0.f, 0.f);
+		matWorld *= matTrans;
+
+		constMap->Mat_ = matWorld*Camera::GetIns()->GetMatViewProj();
+	}
+	constBuffer->Unmap(0, nullptr);
+}
+
+//
 // 頂点バッファビュー作成
 //
 void Object3d::CreateVBView()
@@ -66,16 +104,16 @@ void Object3d::CreateVBView()
 
 	//頂点配列
 	XMFLOAT3 vertices[] = {
-	{-0.5f,-0.5f,0.f},
-	{-0.5f,+0.5f,0.f},
-	{+0.5f,-0.5f,0.f},
-	{+0.5f,0.5f,0.f}
+	{-20.f,-50.f,0.f},
+	{-20.f,50.f,0.f},
+	{20.f,-50.f,0.f},
+	{20.f,50.f,0.f}
 	};
 
 	//インデックス配列
 	unsigned short indices[] = {
 	0,1,2,
-	2,1,3
+	1,2,3
 	};
 
 	//プロパティ設定
@@ -174,9 +212,6 @@ void Object3d::ConstBufferSetting()
 	cbresdesc.SampleDesc.Count = 1;
 	cbresdesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
-	// GPUリソース生成
-	ID3D12Resource* constBuffer = nullptr;
-
 	result = m_Device->CreateCommittedResource(
 		&cbheap,
 		D3D12_HEAP_FLAG_NONE,
@@ -188,7 +223,13 @@ void Object3d::ConstBufferSetting()
 	// 定数バッファへのデータ転送
 	ConstBuffer* constMap = nullptr;
 	result = constBuffer->Map(0, nullptr, (void**)&constMap);
-	constMap->Color_ = XMFLOAT4(0, 0, 0, 1);
+	constMap->Color_ = XMFLOAT4(0, 0, 0, 1);//色
+
+	{
+		constMap->Mat_ = XMMatrixIdentity();//行列
+		//透視投影変換行列
+		constMap->Mat_ = Camera::GetIns()->GetMatViewProj();
+	}
 	constBuffer->Unmap(0, nullptr);
 
 	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc{};
@@ -221,7 +262,7 @@ void Object3d::ShaderSetting()
 		L"VertexShader.hlsl",/*シェーダ名*/
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE,/*デフォルト*/
-		"BasicVS", "vs_5_0",/*バージョンは5.0*/
+		"main", "vs_5_0",/*バージョンは5.0*/
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,/*最適化しない　デバッグ用*/
 		0,
 		&m_VsBlob, &errorBlob);

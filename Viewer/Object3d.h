@@ -22,10 +22,12 @@ private:
 		unsigned int NormalSize=0;
 	}m_header;
 #pragma pack()
-	//定数バッファ
+
+	// 定数バッファ
 	struct ConstBuffer
 	{
 		XMFLOAT4 Color_ = { 1,1,1,1 };
+		XMMATRIX Mat_;
 	};
 	//仮性的メンバ
 	static std::vector<XMFLOAT3> vertices;
@@ -47,7 +49,8 @@ private:
 	static D3D12_ROOT_PARAMETER rootParam;
 	// 定数バッファ転送用のデスクリプタヒープ
 	static ID3D12DescriptorHeap* cbvDescHeap ;
-
+	//定数バッファ
+	static ComPtr<ID3D12Resource> constBuffer;
 	struct Triangle
 	{
 		//座標(x,y,z)三角形を作る頂点
@@ -75,7 +78,7 @@ public:
 	static void EndDraw();
 
 	void Initialize();
-	void Update();
+	static void Update();
 	void Draw();
 
 public:

@@ -1,4 +1,8 @@
-float4 BasicVS( float4 pos : POSITION ) : SV_POSITION
+#include"Header.hlsli"
+
+VSOutput main(float4 pos:POSITION)
 {
-	return pos;
+	VSOutput output;
+	output.svpos = mul(mat,pos);
+	return output;
 }
