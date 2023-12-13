@@ -22,6 +22,11 @@ private:
 		unsigned int NormalSize=0;
 	}m_header;
 #pragma pack()
+	//定数バッファ
+	struct ConstBuffer
+	{
+		XMFLOAT4 Color_ = { 1,1,1,1 };
+	};
 	//仮性的メンバ
 	static std::vector<XMFLOAT3> vertices;
 	static std::vector<unsigned short>indeces;
@@ -38,6 +43,11 @@ private:
 	static D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view;
 	//インデックスバッファビューを作成
 	static D3D12_INDEX_BUFFER_VIEW ibView;// = {};
+	// ルートパラメータ
+	static D3D12_ROOT_PARAMETER rootParam;
+	// 定数バッファ転送用のデスクリプタヒープ
+	static ID3D12DescriptorHeap* cbvDescHeap ;
+
 	struct Triangle
 	{
 		//座標(x,y,z)三角形を作る頂点
@@ -59,7 +69,8 @@ public:
 	static void CreateRootSignature();
 	static void ViewPortsetting();
 	static void ScissorSetting();
-
+	static void ConstBufferSetting();
+	static void RootParameterSetting();
 	static void BeginDraw();
 	static void EndDraw();
 

@@ -33,7 +33,6 @@ private:
 	// フェンス
 	ComPtr<ID3D12Fence> m_Fence = nullptr;
 	UINT64 fenceVal = 0;
-	
 	//リソース設定
 	ComPtr<ID3D12Resource> m_Backbuffers[2]={};
 	ComPtr<ID3D12Resource> m_DepthBuffer = nullptr;
@@ -44,19 +43,27 @@ private:
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{};
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 
-public:
+private:
 	//　各種初期化処理
-	void Initialize(WinApp* winapp);
+	//Device
 	void InitializeDevice();
+	//CommandQueue.CommandAllocator
 	void InitializeCommand();
+	//Swapchain
 	void InitializeSwapchain();
+	//RenderTarget
 	void InitializeRenderTargetView();
+	//
 	void InitializeDepthBuffer();
+	//Fence
 	void InitializeFence();
+
+public:
+	//上の初期化まとめたもの
+	void Initialize(WinApp* winapp);
 	//描画前・後処理
 	void BeginDraw();
 	void EndDraw();
-
 
 public:
 	//ゲッター

@@ -10,27 +10,27 @@ using namespace Microsoft::WRL;
 
 int32_t WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int32_t)
 {
-	WinApp* winApp = nullptr;
-	ReadBinary* R_bin;
-
-	DirectXBase* dxbase;
-
-	ViewScene* scene;
 	//WindowsAPIの初期化
+	WinApp* winApp = nullptr;
 	winApp = new WinApp();
 	winApp->Initialize();
 
 	//DirectX初期化
+	DirectXBase* dxbase;
 	dxbase = new DirectXBase();
 	dxbase->Initialize(winApp);
 
+	
 	if (Object3d::SetDevice(dxbase->GetDev()) && Object3d::SetCommandList(dxbase->GetCmdList())) {
 		Object3d::CommonInit();
 	}
 	else { assert(0); }
+
 	//描画シーンの初期化
+	ViewScene* scene=nullptr;
 	scene = new ViewScene();
 	scene->Initialize();
+
 	//シーンの初期化
 	while (true)  // ゲームループ
 	{
@@ -38,12 +38,18 @@ int32_t WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int32_t)
 			break;
 		}
 
-		//シーンの更新
+		if (!scene) {
+			assert(0);
+			break;
+		}
+		// シーンの更新
 		scene->Update();
-		//シーン描画
+		// シーン描画
 		scene->Draw(dxbase);
 	}
-	//delete dxbase;
-	//delete scene;
+
+	// 破棄処理
+	delete dxbase;
+	delete scene;
 	delete winApp;
 }

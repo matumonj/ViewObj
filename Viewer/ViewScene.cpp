@@ -14,6 +14,13 @@ void ViewScene::Update()
 
 void ViewScene::Draw(DirectXBase*dxbase)
 {
+	if(!dxbase)
+	{
+		assert(0);
+		return;
+	}
+
+	//オブジェクト描画
 	dxbase->BeginDraw();
 	Object3d::BeginDraw();
 	dxbase->EndDraw();

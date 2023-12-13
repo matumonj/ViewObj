@@ -8,7 +8,9 @@
 void DirectXBase::Initialize(WinApp* winapp)
 {
 	this->winapp = winapp;
-	if (FAILED(winapp))assert(0);
+	if (FAILED(winapp)) {
+		assert(0);
+	}
 
 	//デバイスの生成
 	InitializeDevice();
@@ -81,6 +83,7 @@ void DirectXBase::InitializeCommand()
 {
 	HRESULT result=S_FALSE;
 
+	//アロケータ生成
 	result = m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
 		IID_PPV_ARGS(&m_CmdAllocator));
 
