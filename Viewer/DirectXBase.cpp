@@ -21,7 +21,7 @@ void DirectXBase::Initialize(WinApp* winapp)
 	//レンダーターゲットビュー当たりの初期化
 	InitializeRenderTargetView();
 	//深度バッファの初期化
-
+	InitializeDepthBuffer();
 	//フェンス生成
 	InitializeFence();
 }
@@ -158,15 +158,33 @@ void DirectXBase::InitializeDepthBuffer()
 {
 	HRESULT result;
 
+	//リソース設定
+	m_DepthResDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	m_DepthResDesc.Width = WinApp::window_width;
+	m_DepthResDesc.Height = WinApp::window_height;
+	m_DepthResDesc.DepthOrArraySize = 1;
+	m_DepthResDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	m_DepthResDesc.SampleDesc.Count = 1;
+	m_DepthResDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	//ヒーププロパティ
+	D3D12_HEAP_PROPERTIES depthprop = {};
+	depthprop.Type = D3D12_HEAP_TYPE_DEFAULT;
+	//深度地のクリア
+	D3D12_CLEAR_VALUE depthclearval{};
+	depthclearval.DepthStencil.Depth = 1.f;
+	depthclearval.Format = DXGI_FORMAT_D32_FLOAT;
+
 	m_DepthResDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 		DXGI_FORMAT_D32_FLOAT, WinApp::window_width, WinApp::window_height, 1, 0, 1, 0,
 		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
 	);
 
 	//リソース生成
-	result = m_Device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+	result = m_Device->CreateCommittedResource(&depthprop, 
+		D3D12_HEAP_FLAG_NONE,
 		&m_DepthResDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&CD3DX12_CLEAR_VALUE(DXGI_FORMAT_D32_FLOAT, 1.0f, 0),
+		&depthclearval,
 		IID_PPV_ARGS(&m_DepthBuffer));
 
 	//深度view用でスクリプタヒープ作成
@@ -208,12 +226,16 @@ void DirectXBase::BeginDraw()
 	//レンダーターゲットを指定
 	auto rtvH = m_RtvHeaps->GetCPUDescriptorHandleForHeapStart();
 	rtvH.ptr += bbIdx * m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	m_CmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvH = m_DsvHeap->GetCPUDescriptorHandleForHeapStart();
+	m_CmdList->OMSetRenderTargets(1, &rtvH, false, &dsvH);
 
 	//画面クリア　描画色の指定
 	float clearColor[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 	//レンダーターゲット　クリア
 	m_CmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
+	//深度バッファをクリア
+	m_CmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 }
 
 // 描画後処理

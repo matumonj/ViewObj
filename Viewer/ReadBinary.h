@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <DirectXMath.h>
 #include <vector>
 
 #include "Vector3.h"
@@ -31,9 +32,16 @@ private:
 	std::vector<Vector3>m_Normals;
 	// 頂点情報
 	std::vector<Vector3>m_Vertexs;
-
+	//オブジェクトに送るインデックス情報
+	std::vector<int>m_SendIndexData;
+	//オブジェクトに送る頂点情報
+	std::vector<DirectX::XMFLOAT3>m_SendVerticesData;
 public:
 	// 読み込み関数
 	void ReadFile(const char* filename);
+
+	std::vector<int>GetIndexData()const { return m_SendIndexData; }
+
+	std::vector<DirectX::XMFLOAT3>GetVerticesData()const { return m_SendVerticesData; }
 };
 

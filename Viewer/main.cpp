@@ -23,16 +23,11 @@ int32_t WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int32_t)
 	dxbase->Initialize(winApp);
 
 	Camera::GetIns()->ParamInit();
-	
-	if (Object3d::SetDevice(dxbase->GetDev()) && Object3d::SetCommandList(dxbase->GetCmdList())) {
-		Object3d::CommonInit();
-	}
-	else { assert(0); }
 
 	//描画シーンの初期化
 	ViewScene* scene=nullptr;
 	scene = new ViewScene();
-	scene->Initialize();
+	scene->Initialize(dxbase);
 
 	//シーンの初期化
 	while (true)  // ゲームループ

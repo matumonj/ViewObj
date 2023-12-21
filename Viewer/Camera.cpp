@@ -27,8 +27,8 @@ void Camera::Update()
 	//カメラ回転
 	angle += XMConvertToRadians(1.f);
 
-	//eye.x = -100 * sinf(angle);
-	//eye.z = -100 * cosf(angle);
+	eye.x = -100 * sinf(angle);
+	eye.z = -100 * cosf(angle);
 
 	//ビュー行列作成
 	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye),

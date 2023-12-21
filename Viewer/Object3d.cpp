@@ -5,21 +5,6 @@
 #include "Camera.h"
 #include "WinApp.h"
 
-ID3D12Device*Object3d::m_Device = nullptr;
-//ひとまず一つだけ
-//XMFLOAT3 Object3d::vertices[3] = {};
-ComPtr<ID3D12GraphicsCommandList>Object3d::m_CmdList = nullptr;
-ComPtr<ID3DBlob>Object3d::m_VsBlob = nullptr;
-ComPtr<ID3DBlob>Object3d::m_PsBlob = nullptr;
-ComPtr<ID3D12RootSignature>Object3d::m_RootSignature = nullptr;
-ComPtr<ID3D12PipelineState>Object3d::pipeline_state = nullptr;
-D3D12_VIEWPORT Object3d::viewport = {};
-D3D12_RECT Object3d::scissorRect = {};
-D3D12_INDEX_BUFFER_VIEW Object3d::ibView={};
-D3D12_VERTEX_BUFFER_VIEW Object3d::vertex_buffer_view={};
-D3D12_ROOT_PARAMETER Object3d::rootParam = {};
-ID3D12DescriptorHeap* Object3d::cbvDescHeap = nullptr;
-ComPtr<ID3D12Resource>Object3d::constBuffer = nullptr;
 bool Object3d::SetDevice(ID3D12Device* device)
 {
 	m_Device = device;
@@ -46,16 +31,18 @@ bool Object3d::SetCommandList(ID3D12GraphicsCommandList* cmdlist)
 //
 // 共通部分の初期化
 //
-void Object3d::CommonInit()
-{	ConstBufferSetting();
+void Object3d::CommonInit(ReadBinary* data)
+{
+	indeces = data->GetIndexData();
+	vertices = data->GetVerticesData();
+
+	ConstBufferSetting();
 	//頂点・インデックス
 	CreateVBView();
 	//シェーダ周り
 	ShaderSetting();
-	
 	//パイプライン
 	CreatePipelineState();
-
 }
 
 //
@@ -87,7 +74,7 @@ void Object3d::Update()
 		matWorld *= matRot;
 
 		// 平行移動
-		matTrans = XMMatrixTranslation(50.f, 0.f, 0.f);
+		matTrans = XMMatrixTranslation(0.f, 0.f, 0.f);
 		matWorld *= matTrans;
 
 		constMap->Mat_ = matWorld*Camera::GetIns()->GetMatViewProj();
@@ -102,31 +89,21 @@ void Object3d::CreateVBView()
 {
 	HRESULT result = S_FALSE;
 
-	//頂点配列
-	XMFLOAT3 vertices[] = {
-	{-20.f,-50.f,0.f},
-	{-20.f,50.f,0.f},
-	{20.f,-50.f,0.f},
-	{20.f,50.f,0.f}
-	};
-
-	//インデックス配列
-	unsigned short indices[] = {
-	0,1,2,
-	1,2,3
-	};
-
+	
 	//プロパティ設定
 	D3D12_HEAP_PROPERTIES heap_properties = {};
 	heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
 	heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
+
+	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * vertices.size());
+
 	//リソースデスク設定
 	D3D12_RESOURCE_DESC resource_desc = {};
 	resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	//頂点情報
-	resource_desc.Width = sizeof(vertices);
+	resource_desc.Width = sizeVB;
 	resource_desc.Height = 1;
 	resource_desc.DepthOrArraySize = 1;
 	resource_desc.MipLevels = 1;
@@ -159,19 +136,18 @@ void Object3d::CreateVBView()
 		std::copy(std::begin(vertices), std::end(vertices), vertMap);
 		vertexBuffer->Unmap(0, nullptr);
 	//}
-
-	
-	//バッファの仮想アドレス
+//バッファの仮想アドレス
 	vertex_buffer_view.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
 	//頂点の全バイト数
-	vertex_buffer_view.SizeInBytes = sizeof(vertices);
+	vertex_buffer_view.SizeInBytes = sizeVB;
 	//1頂点あたりの
 	vertex_buffer_view.StrideInBytes = sizeof(XMFLOAT3);
 
 	//インデックスバッファ設定
 	ID3D12Resource* indexBuffer = nullptr;
-	
-	resource_desc.Width = sizeof(indices);
+
+	UINT sizeIB = static_cast<UINT>(sizeof(int) * indeces.size());
+	resource_desc.Width = sizeIB;
 	result = m_Device->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
@@ -183,12 +159,12 @@ void Object3d::CreateVBView()
 	//作ったバッファにインデックスデータをコピー
 	unsigned short* mapIndex = nullptr;
 	indexBuffer->Map(0, nullptr, (void**)&mapIndex);
-	std::copy(std::begin(indices), std::end(indices), mapIndex);
+	std::copy(std::begin(indeces), std::end(indeces), mapIndex);
 	indexBuffer->Unmap(0, nullptr);
 
 	ibView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
 	ibView.Format = DXGI_FORMAT_R16_UINT;
-	ibView.SizeInBytes = sizeof(indices);
+	ibView.SizeInBytes = sizeIB;
 
 }
 
@@ -332,10 +308,12 @@ void Object3d::CreatePipelineState()
 	graphics_pipeline.RasterizerState.AntialiasedLineEnable = false;
 	graphics_pipeline.RasterizerState.ForcedSampleCount = 0;
 	graphics_pipeline.RasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-
-	graphics_pipeline.DepthStencilState.DepthEnable = false;
+	//デプスステンシルステート設定
+	graphics_pipeline.DepthStencilState.DepthEnable = true;
 	graphics_pipeline.DepthStencilState.StencilEnable = false;
-
+	graphics_pipeline.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	graphics_pipeline.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	graphics_pipeline.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	//レンダーターゲット設定
 	D3D12_RENDER_TARGET_BLEND_DESC render_target_blend = {};
 	render_target_blend.BlendEnable = false;
@@ -392,6 +370,7 @@ void Object3d::CreateRootSignature()
 	rootParam.DescriptorTable.NumDescriptorRanges = 1;
 	rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+	//ルートシグネチャ
 	D3D12_ROOT_SIGNATURE_DESC root_signature = {};
 	root_signature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	root_signature.pParameters = &rootParam;//ルートパラメータの先頭アドレス
@@ -429,8 +408,7 @@ void Object3d::CreateRootSignature()
 //
 void Object3d::ViewPortsetting()
 {
-	
-
+	//ウィンドウの大きさ
 	constexpr float window_w = 1280;
 	constexpr float window_h = 720;
 
@@ -449,6 +427,7 @@ void Object3d::ViewPortsetting()
 
 void Object3d::ScissorSetting()
 {
+	//ウィンドウの大きさ
 	constexpr LONG window_w = 1280;
 	constexpr LONG window_h = 720;
 
@@ -464,19 +443,23 @@ void Object3d::ScissorSetting()
 
 void Object3d::BeginDraw()
 {
+
 	m_CmdList->SetPipelineState(pipeline_state.Get());
+
+	//ビューポート・シザー矩形設定
 	ViewPortsetting();
 	ScissorSetting();
-	
-	
+
+	//ルーロシグネチャ転送
 	m_CmdList->SetGraphicsRootSignature(m_RootSignature.Get());
+
 	//デスクリプタヒープ
-	ID3D12DescriptorHeap* ppHeap[] = { cbvDescHeap };
+	ID3D12DescriptorHeap* ppHeap[] = { cbvDescHeap.Get() };
 	m_CmdList->SetDescriptorHeaps(_countof(ppHeap), ppHeap);
 	//定数バッファビューセット
 	m_CmdList->SetGraphicsRootDescriptorTable(0, cbvDescHeap->GetGPUDescriptorHandleForHeapStart());
 	m_CmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_CmdList->IASetVertexBuffers(0, 1, &vertex_buffer_view);
 	m_CmdList->IASetIndexBuffer(&ibView);
-	m_CmdList->DrawIndexedInstanced(6, 1, 0, 0,0);
+	m_CmdList->DrawIndexedInstanced(indeces.size(), 1, 0, 0, 0);
 }

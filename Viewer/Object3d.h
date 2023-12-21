@@ -8,6 +8,8 @@
 #include<d3dcompiler.h>
 
 #include <DirectXMath.h>
+
+#include "ReadBinary.h"
 #pragma comment(lib,"d3dcompiler.lib")
 using namespace DirectX;
 using namespace Microsoft::WRL;
@@ -17,9 +19,9 @@ private:
 #pragma pack(1)
 	struct Header
 	{
-		unsigned int TriangleSize=0;
-		unsigned int VertexSize=0;
-		unsigned int NormalSize=0;
+		unsigned int TriangleSize = 0;
+		unsigned int VertexSize = 0;
+		unsigned int NormalSize = 0;
 	}m_header;
 #pragma pack()
 
@@ -29,28 +31,41 @@ private:
 		XMFLOAT4 Color_ = { 1,1,1,1 };
 		XMMATRIX Mat_;
 	};
-	//仮性的メンバ
-	static std::vector<XMFLOAT3> vertices;
-	static std::vector<unsigned short>indeces;
-	static ComPtr<ID3DBlob>m_VsBlob;
-	static ComPtr<ID3DBlob>m_PsBlob;
-	static ComPtr<ID3D12RootSignature>m_RootSignature;
-	static ID3D12Device*m_Device;
-	static ComPtr<ID3D12GraphicsCommandList>m_CmdList;
+
+private:
+	//頂点
+	std::vector<XMFLOAT3> vertices = {};
+	//インデックス
+	std::vector<int>indeces = {};
+
+private:
+	//デバイス
+	ComPtr<ID3D12Device>m_Device = nullptr;
+	//コマンドリスト
+	ComPtr<ID3D12GraphicsCommandList>m_CmdList = nullptr;
+
+	//シェーダ情報転送用
+	ComPtr<ID3DBlob>m_VsBlob = nullptr;//頂点シェーダ
+	ComPtr<ID3DBlob>m_PsBlob = nullptr;//ピクセルシェーダ
+	//ルートシグネチャ
+	ComPtr<ID3D12RootSignature>m_RootSignature = nullptr;
 	//パイプラインステート
-	static ComPtr<ID3D12PipelineState>pipeline_state;
-	static D3D12_VIEWPORT viewport ;
-	static D3D12_RECT scissorRect ;
+	ComPtr<ID3D12PipelineState>pipeline_state = nullptr;
+	//ビューポート・シザー矩形
+	D3D12_VIEWPORT viewport = {};
+	D3D12_RECT scissorRect = {};
 	//頂点バッファビュー
-	static D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view;
-	//インデックスバッファビューを作成
-	static D3D12_INDEX_BUFFER_VIEW ibView;// = {};
-	// ルートパラメータ
-	static D3D12_ROOT_PARAMETER rootParam;
+	D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view = {};
+	//インデックスバッファビュー
+	D3D12_INDEX_BUFFER_VIEW ibView = {};
+	//ルートパラメータ
+	D3D12_ROOT_PARAMETER rootParam = {};
+
 	// 定数バッファ転送用のデスクリプタヒープ
-	static ID3D12DescriptorHeap* cbvDescHeap ;
+	ComPtr<ID3D12DescriptorHeap> cbvDescHeap = nullptr;
 	//定数バッファ
-	static ComPtr<ID3D12Resource> constBuffer;
+	ComPtr<ID3D12Resource> constBuffer = nullptr;
+
 	struct Triangle
 	{
 		//座標(x,y,z)三角形を作る頂点
@@ -61,30 +76,43 @@ private:
 		Vector3 normal = Vector3(0.f, 0.f, 0.f);
 	};
 
+public:
+	//初期化
+	void CommonInit(ReadBinary* data);
+
+	//シェーダ読み込み
+	void ShaderSetting();
+
+	//グラフィックスパイプライン初期化
+	void CreatePipelineState();
+
+	//ルートシグネチャ初期化
+	void CreateRootSignature();
+	void RootParameterSetting();
+
+	//ビューポート・シザー矩形設定
+	void ViewPortsetting();
+	void ScissorSetting();
+
+	//定数バッファへのデータ転送など
+	void ConstBufferSetting();
+
+	//描画処理
+	void BeginDraw();
+	void EndDraw();
 
 public:
-	void CreateMesh();
-	void LoadModel();
-
-	static void CommonInit();
-	static void ShaderSetting();
-	static void CreatePipelineState();
-	static void CreateRootSignature();
-	static void ViewPortsetting();
-	static void ScissorSetting();
-	static void ConstBufferSetting();
-	static void RootParameterSetting();
-	static void BeginDraw();
-	static void EndDraw();
-
+	//初期化
 	void Initialize();
-	static void Update();
+	//更新
+	void Update();
+	//描画
 	void Draw();
 
-public:
-	static bool SetDevice(ID3D12Device* device);
-	static bool SetCommandList(ID3D12GraphicsCommandList* cmdlist);
+public:/* セッター */
+	bool SetDevice(ID3D12Device* device);
+	bool SetCommandList(ID3D12GraphicsCommandList* cmdlist);
 private:
-	static void CreateVBView();
+	void CreateVBView();
 };
 

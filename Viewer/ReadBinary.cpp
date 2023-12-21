@@ -30,4 +30,13 @@ void ReadBinary::ReadFile(const char* filename)
 	for (size_t i = 0; i < m_header.NormalSize; i++) {
 		ifs.read(reinterpret_cast<char*>(&m_Normals[i]), sizeof(m_Normals[i]));
 	}
+
+	for (size_t i = 0; i < m_header.TriangleSize; i++) {
+		m_SendIndexData.emplace_back(m_triangledata[i].index[0]);
+		m_SendIndexData.emplace_back(m_triangledata[i].index[1]);
+		m_SendIndexData.emplace_back(m_triangledata[i].index[2]);
+	}
+	for (size_t i = 0; i < m_header.VertexSize; i++) {
+		m_SendVerticesData.emplace_back(DirectX::XMFLOAT3(m_Vertexs[i].x,m_Vertexs[i].y,m_Vertexs[i].z));
+	}
 }
