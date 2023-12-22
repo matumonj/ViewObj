@@ -29,6 +29,7 @@ private:
 	{
 		XMFLOAT4 Color_ = { 1,1,1,1 };
 		XMMATRIX Mat_;
+		XMFLOAT3 Normal_{ 0,0,0 };
 	};
 	// 定数バッファ転送用のデスクリプタヒープ
 	ComPtr<ID3D12DescriptorHeap> cbvDescHeap = nullptr;
@@ -36,8 +37,15 @@ private:
 	ComPtr<ID3D12Resource> constBuffer = nullptr;
 
 private:
+	//頂点データ
+	struct VertexData 
+	{
+		XMFLOAT3 Pos_ = {};
+		XMFLOAT3 Normal_ = {};
+	};
+
 	//頂点
-	std::vector<XMFLOAT3> vertices = {};
+	std::vector<VertexData> vertices = {};
 	//インデックス
 	std::vector<int>indeces = {};
 
@@ -46,15 +54,6 @@ private:
 	ComPtr<ID3D12Device>m_Device = nullptr;
 	//コマンドリスト
 	ComPtr<ID3D12GraphicsCommandList>m_CmdList = nullptr;
-	//パイプラインステート
-	//ComPtr<ID3D12PipelineState>pipeline_state = nullptr;
-	//シェーダ情報転送用
-	//ComPtr<ID3DBlob>m_VsBlob = nullptr;//頂点シェーダ
-	//ComPtr<ID3DBlob>m_PsBlob = nullptr;//ピクセルシェーダ
-	//ルートシグネチャ
-	//ComPtr<ID3D12RootSignature>m_RootSignature = nullptr;
-	//パイプラインステート
-	//ComPtr<ID3D12PipelineState>pipeline_state = nullptr;
 	//ビューポート・シザー矩形
 	D3D12_VIEWPORT viewport = {};
 	D3D12_RECT scissorRect = {};
@@ -62,9 +61,6 @@ private:
 	D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view = {};
 	//インデックスバッファビュー
 	D3D12_INDEX_BUFFER_VIEW ibView = {};
-	//ルートパラメータ
-	//D3D12_ROOT_PARAMETER rootParam = {};
-
 	//パイプライン・ルートシグネチャ情報読み込み
 	std::unique_ptr<PipelineSetting>m_PipelineSet=nullptr;
 	

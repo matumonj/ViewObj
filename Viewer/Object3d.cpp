@@ -36,11 +36,12 @@ bool Object3d::SetCommandList(ID3D12GraphicsCommandList* cmdlist)
 //
 void Object3d::CommonInit()
 {
-	//後にバイナリデータからの読み込みに変える
-	vertices.emplace_back(XMFLOAT3(-20.f, -20.5f, 0.f));
-	vertices.emplace_back(XMFLOAT3(-20.f, +20.5f, 0.f));
-	vertices.emplace_back(XMFLOAT3(20.f, -20.5f, 0.f));
-	vertices.emplace_back(XMFLOAT3(20.f, 20.5f, 0.f));
+	VertexData v1{ {} ,{} };
+	//後にバイナリデータからの読み込みに変える //{{頂点座標},{法線}}
+	vertices.emplace_back(VertexData({ { XMFLOAT3(-20.f, -20.5f, 0.f) },{XMFLOAT3(0,0,0)} }));
+	vertices.emplace_back(VertexData({ { XMFLOAT3(-20.f, +20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
+	vertices.emplace_back(VertexData({ { XMFLOAT3(20.f, -20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
+	vertices.emplace_back(VertexData({ { XMFLOAT3(20.f, 20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
 
 	//インデックス(四角形)
 	indeces.emplace_back(0);
@@ -110,7 +111,7 @@ void Object3d::CreateVBView()
 	heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
 	//頂点データのサイズ取得
-	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * vertices.size());
+	UINT sizeVB = static_cast<UINT>(sizeof(VertexData) * vertices.size());
 
 	//リソースデスク設定
 	D3D12_RESOURCE_DESC resource_desc = {};
@@ -142,11 +143,39 @@ void Object3d::CreateVBView()
 		assert(0);
 	}
 
+	//法線
+	for (size_t i = 0; i < vertices.size()/3; i++) {
+		//三角形のインデックス抜く
+		unsigned short index0 = indeces[i * 3 + 0];
+		unsigned short index1 = indeces[i * 3 + 1];
+		unsigned short index2 = indeces[i * 3 + 2];
+
+		//三角形の構成頂点抜き出す
+		XMVECTOR p0 = XMLoadFloat3(&vertices[index0].Pos_);
+		XMVECTOR p1 = XMLoadFloat3(&vertices[index1].Pos_);
+		XMVECTOR p2 = XMLoadFloat3(&vertices[index2].Pos_);
+
+		//2辺のベクトル
+		XMVECTOR v1 = XMVectorSubtract(p1, p0);
+		XMVECTOR v2 = XMVectorSubtract(p2, p0);
+	
+		//外積算出後法線求める
+		XMVECTOR normal = XMVector3Cross(v1, v2);
+		//正規化
+		normal = XMVector3Normalize(normal);
+		//頂点データの代入
+		XMStoreFloat3(&vertices[index0].Normal_, normal);
+		XMStoreFloat3(&vertices[index1].Normal_, normal);
+		XMStoreFloat3(&vertices[index2].Normal_, normal);
+
+	}
 	//バッファーに頂点情報コピー
-	XMFLOAT3* vertMap = nullptr;
+	VertexData* vertMap = nullptr;
 	result = vertexBuffer->Map(0, nullptr, (void**)&vertMap);
 	//if (SUCCEEDED(result)) {
-		std::copy(std::begin(vertices), std::end(vertices), vertMap);
+	for (size_t i = 0; i < vertices.size(); i++) {
+		vertMap[i] = vertices[i];
+	}
 		vertexBuffer->Unmap(0, nullptr);
 	//}
 //バッファの仮想アドレス
@@ -154,7 +183,7 @@ void Object3d::CreateVBView()
 	//頂点の全バイト数
 	vertex_buffer_view.SizeInBytes = sizeVB;
 	//1頂点あたりの
-	vertex_buffer_view.StrideInBytes = sizeof(XMFLOAT3);
+	vertex_buffer_view.StrideInBytes = sizeof(VertexData);
 
 	//インデックスバッファ設定
 	ID3D12Resource* indexBuffer = nullptr;

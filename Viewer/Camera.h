@@ -25,5 +25,7 @@ public:
 	XMMATRIX GetMatProj()const { return matProj; }
 	XMMATRIX GetMatViewProj()const{return matView * matProj;}
 
+	void SetEye(Vector3 eye) { this->eye = eye; }
+	void SetTarget(Vector3 target) { this->target = target; }
 };
 
