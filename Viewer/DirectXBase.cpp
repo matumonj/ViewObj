@@ -119,7 +119,7 @@ void DirectXBase::InitializeSwapchain()
 	swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapchainDesc.SampleDesc.Count = 1;
 	swapchainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
-	swapchainDesc.BufferCount = 2;
+	swapchainDesc.BufferCount = 2;//ダブルバッファ
 	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 

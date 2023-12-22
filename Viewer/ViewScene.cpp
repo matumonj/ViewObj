@@ -11,15 +11,20 @@ void ViewScene::Initialize(DirectXBase*dxbase)
 	//オブジェクト生成(頂点、インデックスはバイナリから引数として読み込む)
 	m_Object.reset(new Object3d());
 	if (m_Object->SetDevice(dxbase->GetDev()) && m_Object->SetCommandList(dxbase->GetCmdList())) {
-		m_Object->CommonInit(m_binary.get());
+		m_Object->CommonInit();//デバイスとコマンドリストがnull出ない時生成
 	} else { assert(0); }
 
 }
 
 void ViewScene::Update()
 {
+	//カメラ更新
 	Camera::GetIns()->Update();
-	m_Object->Update();
+	//オブジェクト更新
+	if (m_Object) {
+		m_Object->SetScl(Vector3(1, 1, 1));
+		m_Object->Update();
+	}
 }
 
 void ViewScene::Draw(DirectXBase*dxbase)
@@ -32,7 +37,9 @@ void ViewScene::Draw(DirectXBase*dxbase)
 
 	//オブジェクト描画
 	dxbase->BeginDraw();
-	m_Object->BeginDraw();
+	if (m_Object) {
+		m_Object->BeginDraw();
+	}
 	dxbase->EndDraw();
 	
 }

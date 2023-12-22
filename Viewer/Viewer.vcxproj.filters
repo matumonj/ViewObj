@@ -5,75 +5,110 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="ヘッダー ファイル">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="リソース ファイル">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="ソース ファイル\Object3d">
+      <UniqueIdentifier>{3c549b1b-0934-4726-a3d9-f1eb0afd3156}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Object3d\cpp">
+      <UniqueIdentifier>{fa657e6d-a93a-420d-9b2d-b240c372b6b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Object3d\h">
+      <UniqueIdentifier>{ce71fd1f-fbfe-41e9-b41e-906ee81c0104}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Camera">
+      <UniqueIdentifier>{ac0b7f03-8ffb-4772-bc0f-bec5225d891b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\DirectBase">
+      <UniqueIdentifier>{5bdfdf1d-7ef8-400c-b86f-cc5e4bd0f26c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\WinSys">
+      <UniqueIdentifier>{ecfa2ecb-674c-481b-bebb-77061e2deb4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Other">
+      <UniqueIdentifier>{b718def4-e5a2-4ced-870e-75dfe82e7334}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Scene">
+      <UniqueIdentifier>{1c0c0a19-2e43-4b06-89b0-5e22ac4435b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\Default">
+      <UniqueIdentifier>{0173ca0d-6b21-486d-a1da-caeede72e0fb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WinApp.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="DirectXBase.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="RootSigSetting.h">
+      <Filter>ソース ファイル\Object3d\h</Filter>
     </ClInclude>
     <ClInclude Include="Object3d.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ソース ファイル\Object3d\h</Filter>
     </ClInclude>
-    <ClInclude Include="Vector3.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="ReadBinary.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="ViewScene.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="PipelineSetting.h">
+      <Filter>ソース ファイル\Object3d\h</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ソース ファイル\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectXBase.h">
+      <Filter>ソース ファイル\DirectBase</Filter>
+    </ClInclude>
+    <ClInclude Include="WinApp.h">
+      <Filter>ソース ファイル\WinSys</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3.h">
+      <Filter>ソース ファイル\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="ReadBinary.h">
+      <Filter>ソース ファイル\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="ViewScene.h">
+      <Filter>ソース ファイル\Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="WinApp.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="DirectXBase.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Object3d.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Object3d\cpp</Filter>
     </ClCompile>
-    <ClCompile Include="Vector3.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="RootSigSetting.cpp">
+      <Filter>ソース ファイル\Object3d\cpp</Filter>
     </ClCompile>
-    <ClCompile Include="ReadBinary.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="ViewScene.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="PipelineSetting.cpp">
+      <Filter>ソース ファイル\Object3d\cpp</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXBase.cpp">
+      <Filter>ソース ファイル\DirectBase</Filter>
+    </ClCompile>
+    <ClCompile Include="WinApp.cpp">
+      <Filter>ソース ファイル\WinSys</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector3.cpp">
+      <Filter>ソース ファイル\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="ReadBinary.cpp">
+      <Filter>ソース ファイル\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="ViewScene.cpp">
+      <Filter>ソース ファイル\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">
-      <Filter>リソース ファイル</Filter>
+      <Filter>リソース ファイル\Default</Filter>
     </FxCompile>
     <FxCompile Include="VertexShader.hlsl">
-      <Filter>リソース ファイル</Filter>
+      <Filter>リソース ファイル\Default</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Header.hlsli">
-      <Filter>リソース ファイル</Filter>
+      <Filter>リソース ファイル\Default</Filter>
     </None>
   </ItemGroup>
 </Project>

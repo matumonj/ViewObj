@@ -138,7 +138,9 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DirectXBase.h" />
     <ClInclude Include="Object3d.h" />
+    <ClInclude Include="PipelineSetting.h" />
     <ClInclude Include="ReadBinary.h" />
+    <ClInclude Include="RootSigSetting.h" />
     <ClInclude Include="Vector3.h" />
     <ClInclude Include="ViewScene.h" />
     <ClInclude Include="WinApp.h" />
@@ -148,7 +150,9 @@
     <ClCompile Include="DirectXBase.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object3d.cpp" />
+    <ClCompile Include="PipelineSetting.cpp" />
     <ClCompile Include="ReadBinary.cpp" />
+    <ClCompile Include="RootSigSetting.cpp" />
     <ClCompile Include="Vector3.cpp" />
     <ClCompile Include="ViewScene.cpp" />
     <ClCompile Include="WinApp.cpp" />

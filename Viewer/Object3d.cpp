@@ -8,9 +8,11 @@
 bool Object3d::SetDevice(ID3D12Device* device)
 {
 	m_Device = device;
-	//デバイスのセット
+
+	//デバイスのセット(null時)
 	if(m_Device==nullptr)
 	{
+		assert(0);
 		return false;
 	}
 
@@ -20,7 +22,8 @@ bool Object3d::SetDevice(ID3D12Device* device)
 bool Object3d::SetCommandList(ID3D12GraphicsCommandList* cmdlist)
 {
 	m_CmdList = cmdlist;
-	//コマンドリストのセット
+
+	//コマンドリストのセット(null時)
 	if(m_CmdList==nullptr)
 	{
 		return false;
@@ -31,11 +34,25 @@ bool Object3d::SetCommandList(ID3D12GraphicsCommandList* cmdlist)
 //
 // 共通部分の初期化
 //
-void Object3d::CommonInit(ReadBinary* data)
+void Object3d::CommonInit()
 {
-	indeces = data->GetIndexData();
-	vertices = data->GetVerticesData();
+	//後にバイナリデータからの読み込みに変える
+	vertices.emplace_back(XMFLOAT3(-20.f, -20.5f, 0.f));
+	vertices.emplace_back(XMFLOAT3(-20.f, +20.5f, 0.f));
+	vertices.emplace_back(XMFLOAT3(20.f, -20.5f, 0.f));
+	vertices.emplace_back(XMFLOAT3(20.f, 20.5f, 0.f));
 
+	//インデックス(四角形)
+	indeces.emplace_back(0);
+	indeces.emplace_back(1);
+	indeces.emplace_back(2);
+	indeces.emplace_back(1);
+	indeces.emplace_back(2);
+	indeces.emplace_back(3);
+	
+	//パイプライン設定関数用インス
+	m_PipelineSet = std::make_unique<PipelineSetting>();
+	//定数バッファにデータ転送
 	ConstBufferSetting();
 	//頂点・インデックス
 	CreateVBView();
@@ -55,30 +72,27 @@ void Object3d::Update()
 	// 定数バッファへのデータ転送
 	ConstBuffer* constMap = nullptr;
 	result = constBuffer->Map(0, nullptr, (void**)&constMap);
-	constMap->Color_ = XMFLOAT4(0, 0, 0, 1);//色
+	constMap->Color_ = this->Color_;//色
 
-	{
-		XMMATRIX matWorld, matScale, matRot,matTrans;
-		matWorld = XMMatrixIdentity();//単位行列
-		//透視投影変換行列
+	
+	//ワールド座標求める
+	XMMATRIX matWorld, matScale, matRot,matTrans;
+	matWorld = XMMatrixIdentity();//単位行列
+	//拡大・縮小
+	matScale = XMMatrixScaling(Scl_.x, Scl_.y,Scl_.z);
+	matWorld *= matScale;
+	// 回転
+	matRot = XMMatrixIdentity();
+	matRot *= XMMatrixRotationX(XMConvertToRadians(Rot_.x));
+	matRot *= XMMatrixRotationY(XMConvertToRadians(Rot_.y));
+	matRot *= XMMatrixRotationZ(XMConvertToRadians(Rot_.z));
+	matWorld *= matRot;
+	// 平行移動
+	matTrans = XMMatrixTranslation(Pos_.x, Pos_.y, Pos_.z);
+	matWorld *= matTrans;
 
-		//拡大・縮小
-		matScale = XMMatrixScaling(1.f, 0.5f, 1.f);
-		matWorld *= matScale;
-
-		// 回転
-		matRot = XMMatrixIdentity();
-		//matRot *= XMMatrixRotationX(XMConvertToRadians(45.f));
-		//matRot *= XMMatrixRotationY(XMConvertToRadians(45.f));
-		//matRot *= XMMatrixRotationZ(XMConvertToRadians(45.f));
-		matWorld *= matRot;
-
-		// 平行移動
-		matTrans = XMMatrixTranslation(0.f, 0.f, 0.f);
-		matWorld *= matTrans;
-
-		constMap->Mat_ = matWorld*Camera::GetIns()->GetMatViewProj();
-	}
+	constMap->Mat_ = matWorld*Camera::GetIns()->GetMatViewProj();
+	
 	constBuffer->Unmap(0, nullptr);
 }
 
@@ -89,14 +103,13 @@ void Object3d::CreateVBView()
 {
 	HRESULT result = S_FALSE;
 
-	
 	//プロパティ設定
 	D3D12_HEAP_PROPERTIES heap_properties = {};
 	heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
 	heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-
+	//頂点データのサイズ取得
 	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * vertices.size());
 
 	//リソースデスク設定
@@ -146,8 +159,11 @@ void Object3d::CreateVBView()
 	//インデックスバッファ設定
 	ID3D12Resource* indexBuffer = nullptr;
 
+	//インデックスのサイズ取得
 	UINT sizeIB = static_cast<UINT>(sizeof(int) * indeces.size());
 	resource_desc.Width = sizeIB;
+
+	//バッファにデータ転送
 	result = m_Device->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
@@ -157,11 +173,13 @@ void Object3d::CreateVBView()
 		IID_PPV_ARGS(&indexBuffer));
 
 	//作ったバッファにインデックスデータをコピー
-	unsigned short* mapIndex = nullptr;
-	indexBuffer->Map(0, nullptr, (void**)&mapIndex);
-	std::copy(std::begin(indeces), std::end(indeces), mapIndex);
-	indexBuffer->Unmap(0, nullptr);
+	unsigned short* IndexMap = nullptr;
+	indexBuffer->Map(0, nullptr, (void**)&IndexMap);
+	std::copy(std::begin(indeces), std::end(indeces), IndexMap);
 
+	indexBuffer->Unmap(0, nullptr);//マップ解除
+
+	//バッファビュー設定
 	ibView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
 	ibView.Format = DXGI_FORMAT_R16_UINT;
 	ibView.SizeInBytes = sizeIB;
@@ -230,33 +248,8 @@ void Object3d::ShaderSetting()
 {
 	HRESULT result = S_FALSE;
 
-	//エラー用
-	ID3DBlob* errorBlob=nullptr;
-
-	/* 頂点シェーダの読み込み */
-	result = D3DCompileFromFile(
-		L"VertexShader.hlsl",/*シェーダ名*/
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,/*デフォルト*/
-		"main", "vs_5_0",/*バージョンは5.0*/
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,/*最適化しない　デバッグ用*/
-		0,
-		&m_VsBlob, &errorBlob);
-
-	//戻り値チェック
-	if (FAILED(result)) {
-		assert(0);
-	}
-
-	/* ピクセルシェーダの読み込み */
-	result = D3DCompileFromFile(
-		L"PixelShader.hlsl",/*シェーダ名*/
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,/*デフォルト*/
-		"BasicPS", "ps_5_0",/*バージョンは5.0*/
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,/*最適化しない　デバッグ用*/
-		0,
-		&m_PsBlob, &errorBlob);
+	//シェーダ読み込み
+	result = m_PipelineSet->ShaderSetting();
 
 	//戻り値チェック
 	if (FAILED(result)) {
@@ -267,141 +260,15 @@ void Object3d::ShaderSetting()
 
 void Object3d::CreatePipelineState()
 {
-	HRESULT result = S_FALSE;
-
-	// 頂点レイアウト
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-		{
-			"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,
-			D3D12_APPEND_ALIGNED_ELEMENT,
-			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0
-		},
-	};
-
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphics_pipeline = {};
-
-	//ルートシグネチャ設定
-	CreateRootSignature();
-
-	graphics_pipeline.pRootSignature = m_RootSignature.Get();
-
-	//頂点シェーダ
-	graphics_pipeline.VS.pShaderBytecode = m_VsBlob->GetBufferPointer();
-	graphics_pipeline.VS.BytecodeLength = m_VsBlob->GetBufferSize();
-
-	// ピクセルシェーダ
-	graphics_pipeline.PS.pShaderBytecode = m_PsBlob->GetBufferPointer();
-	graphics_pipeline.PS.BytecodeLength = m_PsBlob->GetBufferSize();
-
-	//サンプラーマスク設定
-	graphics_pipeline.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-	//ラスタライザ設定
-	graphics_pipeline.RasterizerState.MultisampleEnable = false;//アンチエイジング用
-	graphics_pipeline.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;//カリングなし
-	graphics_pipeline.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;//塗りつぶす
-	graphics_pipeline.RasterizerState.DepthClipEnable = true;
-	//ブレンドステート設定
-	graphics_pipeline.RasterizerState.FrontCounterClockwise = false;
-	graphics_pipeline.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-	graphics_pipeline.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-	graphics_pipeline.RasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
-	graphics_pipeline.RasterizerState.AntialiasedLineEnable = false;
-	graphics_pipeline.RasterizerState.ForcedSampleCount = 0;
-	graphics_pipeline.RasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-	//デプスステンシルステート設定
-	graphics_pipeline.DepthStencilState.DepthEnable = true;
-	graphics_pipeline.DepthStencilState.StencilEnable = false;
-	graphics_pipeline.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	graphics_pipeline.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-	graphics_pipeline.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-	//レンダーターゲット設定
-	D3D12_RENDER_TARGET_BLEND_DESC render_target_blend = {};
-	render_target_blend.BlendEnable = false;
-	render_target_blend.LogicOpEnable = false;
-	render_target_blend.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-	//レンダーターゲットのセット
-	graphics_pipeline.BlendState.RenderTarget[0] = render_target_blend;
-
-	//入力レイアウト設定
-	graphics_pipeline.InputLayout.pInputElementDescs = inputLayout;
-	graphics_pipeline.InputLayout.NumElements = _countof(inputLayout);
-	//頂点集合の切り離し
-	graphics_pipeline.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;//今はしない
-	//プリミティブ設定(三角形)
-	graphics_pipeline.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-	//レンダーターゲット設定(マルチでもないので１つで)
-	graphics_pipeline.NumRenderTargets = 1;
-	graphics_pipeline.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-	//アンチエイリアシング設定
-	graphics_pipeline.SampleDesc.Count = 1;//1pixelあたり1回サンプリング
-	//graphics_pipeline.SampleDesc.Quality = 0;//
-
-	// 生成
-	result = m_Device->CreateGraphicsPipelineState(
-		&graphics_pipeline, IID_PPV_ARGS(&pipeline_state));
-
+	HRESULT result=S_FALSE;
+	
+	result = m_PipelineSet->Setting(m_Device.Get());
+	
 	if (FAILED(result)) {
 		assert(0);
 	}
 }
 
-//
-// ルートシグネチャ作成
-//
-void Object3d::CreateRootSignature()
-{
-	HRESULT result = S_FALSE;
-	//エラー用
-	ID3DBlob* errorBlob=nullptr;
-
-	//デスクリプタテーブル
-	D3D12_DESCRIPTOR_RANGE descRange{};
-	descRange.NumDescriptors = 1;
-	descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-	descRange.BaseShaderRegister = 0;
-	descRange.OffsetInDescriptorsFromTableStart =
-		D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-	// ルートパラメータ
-	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParam.DescriptorTable.pDescriptorRanges = &descRange;
-	rootParam.DescriptorTable.NumDescriptorRanges = 1;
-	rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-	//ルートシグネチャ
-	D3D12_ROOT_SIGNATURE_DESC root_signature = {};
-	root_signature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	root_signature.pParameters = &rootParam;//ルートパラメータの先頭アドレス
-	root_signature.NumParameters = 1;
-
-	//バイナリコード作成
-	ID3DBlob* rootBlob = nullptr;
-	result = D3D12SerializeRootSignature(
-		&root_signature,// ルートシグネチャ
-		D3D_ROOT_SIGNATURE_VERSION_1_0,// ver指定
-		&rootBlob,//シェーダ情報
-		&errorBlob);
-
-	//戻り値チェック
-	if(FAILED(result))
-	{
-		assert(0);
-	}
-
-	//生成
-	result = m_Device->CreateRootSignature(0, rootBlob->GetBufferPointer(),
-		rootBlob->GetBufferSize(),
-		IID_PPV_ARGS(&m_RootSignature));
-
-	rootBlob->Release();
-	//戻り値チェック
-	if (FAILED(result))
-	{
-		assert(0);
-	}
-}
 
 //
 // ビューポート設定
@@ -409,7 +276,7 @@ void Object3d::CreateRootSignature()
 void Object3d::ViewPortsetting()
 {
 	//ウィンドウの大きさ
-	constexpr float window_w = 1280;
+	constexpr float window_w = 980;
 	constexpr float window_h = 720;
 
 	//画面サイズ・左上座標
@@ -428,7 +295,7 @@ void Object3d::ViewPortsetting()
 void Object3d::ScissorSetting()
 {
 	//ウィンドウの大きさ
-	constexpr LONG window_w = 1280;
+	constexpr LONG window_w = 980;
 	constexpr LONG window_h = 720;
 
 	scissorRect.top = 0;
@@ -444,14 +311,14 @@ void Object3d::ScissorSetting()
 void Object3d::BeginDraw()
 {
 
-	m_CmdList->SetPipelineState(pipeline_state.Get());
+	m_CmdList->SetPipelineState(m_PipelineSet->GetPipelineState());
 
 	//ビューポート・シザー矩形設定
 	ViewPortsetting();
 	ScissorSetting();
 
 	//ルーロシグネチャ転送
-	m_CmdList->SetGraphicsRootSignature(m_RootSignature.Get());
+	m_CmdList->SetGraphicsRootSignature(m_PipelineSet->GetRootSig());
 
 	//デスクリプタヒープ
 	ID3D12DescriptorHeap* ppHeap[] = { cbvDescHeap.Get() };

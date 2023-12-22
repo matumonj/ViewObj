@@ -5,7 +5,7 @@ class WinApp
 {
 public: //静的メンバ変数
 	// ウィンドウサイズ
-	static const int window_width = 1280;  // 横幅
+	static const int window_width = 980;  // 横幅
 	static const int window_height = 720;  // 縦幅
 public:
 	//インスタンス取得用
