@@ -22,5 +22,6 @@ private:
 	std::unique_ptr<ReadBinary>m_binary=nullptr;
 
 	std::unique_ptr<Object3d>m_Object = nullptr;
+	float roty;
 };
 

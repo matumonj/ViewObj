@@ -1,8 +1,7 @@
 #include "Object3d.h"
-
 #include <cassert>
-
 #include "Camera.h"
+#include "d3dx12.h"
 #include "WinApp.h"
 
 bool Object3d::SetDevice(ID3D12Device* device)
@@ -34,22 +33,52 @@ bool Object3d::SetCommandList(ID3D12GraphicsCommandList* cmdlist)
 //
 // 共通部分の初期化
 //
-void Object3d::CommonInit()
+void Object3d::CommonInit(ReadBinary* binary)
 {
+	indeces = binary->GetIndexData();
+	for (size_t i = 0; i < binary->GetVerticesData().size(); i++) {
+		vertices.emplace_back(VertexData({ {binary->GetVerticesData()[i]}, {}}));
+	}
+	//法線
+	for (size_t i = 0; i < vertices.size(); i++) {
+	//	vertices[i].Normal_ = binary->GetNormalData()[i / 3];
+		//三角形のインデックス抜く
+		unsigned short index0 = indeces[i / 3 * 3 + 0];
+		unsigned short index1 = indeces[i / 3 * 3 + 1];
+		unsigned short index2 = indeces[i / 3 * 3 + 2];
+
+		//三角形の構成頂点抜き出す
+		XMVECTOR p0 = XMLoadFloat3(&vertices[index0].Pos_);
+		XMVECTOR p1 = XMLoadFloat3(&vertices[index1].Pos_);
+		XMVECTOR p2 = XMLoadFloat3(&vertices[index2].Pos_);
+
+		//2辺のベクトル
+		XMVECTOR v1 = XMVectorSubtract(p1, p0);
+		XMVECTOR v2 = XMVectorSubtract(p2, p0);
+
+		//外積算出後法線求める
+		XMVECTOR normal = XMVector3Cross(v1, v2);
+		//正規化
+		normal = XMVector3Normalize(normal);
+		//頂点データの代入
+		XMStoreFloat3(&vertices[index0].Normal_,normal );
+		XMStoreFloat3(&vertices[index1].Normal_, { normal });
+		XMStoreFloat3(&vertices[index2].Normal_, { normal });
+	}
 	VertexData v1{ {} ,{} };
 	//後にバイナリデータからの読み込みに変える //{{頂点座標},{法線}}
-	vertices.emplace_back(VertexData({ { XMFLOAT3(-20.f, -20.5f, 0.f) },{XMFLOAT3(0,0,0)} }));
-	vertices.emplace_back(VertexData({ { XMFLOAT3(-20.f, +20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
-	vertices.emplace_back(VertexData({ { XMFLOAT3(20.f, -20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
-	vertices.emplace_back(VertexData({ { XMFLOAT3(20.f, 20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
+	//vertices.emplace_back(VertexData({ { XMFLOAT3(-20.f, -20.5f, 0.f) },{XMFLOAT3(0,0,0)} }));
+	//vertices.emplace_back(VertexData({ { XMFLOAT3(-20.f, +20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
+	//vertices.emplace_back(VertexData({ { XMFLOAT3(20.f, -20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
+	//vertices.emplace_back(VertexData({ { XMFLOAT3(20.f, 20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
 
 	//インデックス(四角形)
-	indeces.emplace_back(0);
-	indeces.emplace_back(1);
-	indeces.emplace_back(2);
-	indeces.emplace_back(1);
-	indeces.emplace_back(2);
-	indeces.emplace_back(3);
+	//indeces.emplace_back(0);
+	//indeces.emplace_back(1);
+	//indeces.emplace_back(2);
+	//indeces.emplace_back(1);
+	//indeces.emplace_back(2);
+	//indeces.emplace_back(3);
 	
 	//パイプライン設定関数用インス
 	m_PipelineSet = std::make_unique<PipelineSetting>();
@@ -92,9 +121,10 @@ void Object3d::Update()
 	matTrans = XMMatrixTranslation(Pos_.x, Pos_.y, Pos_.z);
 	matWorld *= matTrans;
 
+	//ワールド行列にカメラからのビュープロジェクション行列かける
 	constMap->Mat_ = matWorld*Camera::GetIns()->GetMatViewProj();
 	
-	constBuffer->Unmap(0, nullptr);
+	constBuffer->Unmap(0, nullptr);//マップ解除
 }
 
 //
@@ -143,31 +173,7 @@ void Object3d::CreateVBView()
 		assert(0);
 	}
 
-	//法線
-	for (size_t i = 0; i < vertices.size()/3; i++) {
-		//三角形のインデックス抜く
-		unsigned short index0 = indeces[i * 3 + 0];
-		unsigned short index1 = indeces[i * 3 + 1];
-		unsigned short index2 = indeces[i * 3 + 2];
 
-		//三角形の構成頂点抜き出す
-		XMVECTOR p0 = XMLoadFloat3(&vertices[index0].Pos_);
-		XMVECTOR p1 = XMLoadFloat3(&vertices[index1].Pos_);
-		XMVECTOR p2 = XMLoadFloat3(&vertices[index2].Pos_);
-
-		//2辺のベクトル
-		XMVECTOR v1 = XMVectorSubtract(p1, p0);
-		XMVECTOR v2 = XMVectorSubtract(p2, p0);
-	
-		//外積算出後法線求める
-		XMVECTOR normal = XMVector3Cross(v1, v2);
-		//正規化
-		normal = XMVector3Normalize(normal);
-		//頂点データの代入
-		XMStoreFloat3(&vertices[index0].Normal_, normal);
-		XMStoreFloat3(&vertices[index1].Normal_, normal);
-		XMStoreFloat3(&vertices[index2].Normal_, normal);
-	}
 	//バッファーに頂点情報コピー
 	VertexData* vertMap = nullptr;
 	result = vertexBuffer->Map(0, nullptr, (void**)&vertMap);

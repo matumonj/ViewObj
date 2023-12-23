@@ -36,6 +36,8 @@ private:
 	std::vector<int>m_SendIndexData;
 	//オブジェクトに送る頂点情報
 	std::vector<DirectX::XMFLOAT3>m_SendVerticesData;
+	//
+	std::vector<DirectX::XMFLOAT3>m_SendNormalData;
 public:
 	// 読み込み関数
 	void ReadFile(const char* filename);
@@ -43,5 +45,7 @@ public:
 	std::vector<int>GetIndexData()const { return m_SendIndexData; }
 
 	std::vector<DirectX::XMFLOAT3>GetVerticesData()const { return m_SendVerticesData; }
+
+	std::vector<DirectX::XMFLOAT3>GetNormalData()const { return m_SendNormalData; }
 };
 

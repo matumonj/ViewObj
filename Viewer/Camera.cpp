@@ -11,7 +11,7 @@ Camera* Camera::GetIns()
 
 void Camera::ParamInit()
 {
-	eye = XMFLOAT3(0, 0, -100);
+	eye = XMFLOAT3(0, 0, -800);
 	target = XMFLOAT3(0, 0, 0);
 	upvec = XMFLOAT3(0, 1, 0);
 
@@ -25,10 +25,10 @@ void Camera::ParamInit()
 void Camera::Update()
 {
 	//カメラ回転
-	//angle += XMConvertToRadians(1.f);
+	angle += XMConvertToRadians(1.f);
 
-	//eye.x = -100 * sinf(angle);
-	//eye.z = -100 * cosf(angle);
+	//eye.x = -800 * sinf(angle);
+	//eye.z = -800 * cosf(angle);
 
 	//ビュー行列作成
 	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye),

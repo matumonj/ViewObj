@@ -2,8 +2,6 @@
 #include <array>
 
 #include <d3d12.h>
-#include "d3dx12.h"
-#include <dxgi1_6.h>
 #include "Vector3.h"
 #include<d3dcompiler.h>
 #include <DirectXMath.h>
@@ -84,7 +82,7 @@ private:
 
 public:
 	//初期化
-	void CommonInit();
+	void CommonInit(ReadBinary*binary);
 
 	//シェーダ読み込み
 	void ShaderSetting();

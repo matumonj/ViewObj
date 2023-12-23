@@ -39,4 +39,9 @@ void ReadBinary::ReadFile(const char* filename)
 	for (size_t i = 0; i < m_header.VertexSize; i++) {
 		m_SendVerticesData.emplace_back(DirectX::XMFLOAT3(m_Vertexs[i].x,m_Vertexs[i].y,m_Vertexs[i].z));
 	}
+	for (size_t i=0;i<m_header.NormalSize;i++){
+		m_SendNormalData.emplace_back(DirectX::XMFLOAT3(m_Normals[i]));
+	}
+
+
 }
