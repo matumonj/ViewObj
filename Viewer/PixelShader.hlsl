@@ -11,6 +11,6 @@ float4 BasicPS(VSOutput input) : SV_TARGET
 	float brightness = diffuse+0.3f;//^‚ÁˆÃ‚ğ”ğ‚¯‚é
 
 	return float4(brightness, brightness, brightness, 1);
-	return float4(input.normal,1);
+
 	//return color;
 }

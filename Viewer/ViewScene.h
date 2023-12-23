@@ -8,7 +8,7 @@ class ViewScene
 {
 public:
 	ViewScene(){};
-	~ViewScene(){};
+	~ViewScene();
 public:
 	// ‰Šú‰»
 	void Initialize(DirectXBase* dxbase);

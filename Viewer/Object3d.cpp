@@ -167,18 +167,18 @@ void Object3d::CreateVBView()
 		XMStoreFloat3(&vertices[index0].Normal_, normal);
 		XMStoreFloat3(&vertices[index1].Normal_, normal);
 		XMStoreFloat3(&vertices[index2].Normal_, normal);
-
 	}
 	//バッファーに頂点情報コピー
 	VertexData* vertMap = nullptr;
 	result = vertexBuffer->Map(0, nullptr, (void**)&vertMap);
-	//if (SUCCEEDED(result)) {
+	
+	//頂点のデータコピー
 	for (size_t i = 0; i < vertices.size(); i++) {
 		vertMap[i] = vertices[i];
 	}
-		vertexBuffer->Unmap(0, nullptr);
-	//}
-//バッファの仮想アドレス
+	vertexBuffer->Unmap(0, nullptr);
+	
+	//バッファの仮想アドレス
 	vertex_buffer_view.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
 	//頂点の全バイト数
 	vertex_buffer_view.SizeInBytes = sizeVB;

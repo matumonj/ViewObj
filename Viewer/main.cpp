@@ -22,6 +22,7 @@ int32_t WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int32_t)
 	dxbase = new DirectXBase();
 	dxbase->Initialize(winApp);
 
+	//カメラパラメータ初期化
 	Camera::GetIns()->ParamInit();
 
 	//描画シーンの初期化
@@ -40,6 +41,7 @@ int32_t WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int32_t)
 			assert(0);
 			break;
 		}
+
 		// シーンの更新
 		scene->Update();
 		// シーン描画

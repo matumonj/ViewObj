@@ -27,9 +27,9 @@ private:
 	// 定数バッファ
 	struct ConstBuffer
 	{
-		XMFLOAT4 Color_ = { 1,1,1,1 };
-		XMMATRIX Mat_;
-		XMFLOAT3 Normal_{ 0,0,0 };
+		XMFLOAT4 Color_ = { 1,1,1,1 };// 色情報
+		XMMATRIX Mat_;// 行列
+		XMFLOAT3 Normal_{ 0,0,0 };// 法線
 	};
 	// 定数バッファ転送用のデスクリプタヒープ
 	ComPtr<ID3D12DescriptorHeap> cbvDescHeap = nullptr;

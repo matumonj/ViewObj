@@ -2,6 +2,14 @@
 
 #include "Camera.h"
 #include"Object3d.h"
+ViewScene::~ViewScene()
+{
+	//各インスタンス削除
+	m_binary.reset(nullptr);
+	m_Object.reset(nullptr);
+}
+
+
 void ViewScene::Initialize(DirectXBase*dxbase)
 {
 	//バイナリの読み込み
@@ -20,6 +28,7 @@ void ViewScene::Update()
 {
 	//カメラ更新
 	Camera::GetIns()->Update();
+
 	//オブジェクト更新
 	if (m_Object) {
 		m_Object->SetScl(Vector3(1, 1, 1));
