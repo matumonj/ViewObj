@@ -2,7 +2,7 @@ cbuffer cbuff0:register(b0)
 {
 	float4 color;
 	matrix mat;
-	float3 normal;
+	//float3 normal;
 }
 
 struct VSOutput

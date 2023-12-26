@@ -131,7 +131,7 @@ void DirectXBase::InitializeSwapchain()
 // レンダーターゲット周りの初期化
 void DirectXBase::InitializeRenderTargetView()
 {
-	HRESULT result;
+	HRESULT result=S_FALSE;
 	//デスクリプタヒープの生成
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
 	//レンダーターゲットビュー

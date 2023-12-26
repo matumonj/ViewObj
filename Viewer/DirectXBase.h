@@ -15,6 +15,7 @@ public:
 	DirectXBase(){};
 	~DirectXBase(){};
 private:
+	//window周り
 	WinApp* winapp = nullptr;
 	// デバイス関連
 	ComPtr<IDXGIFactory6> m_DxgiFactory=nullptr;
@@ -53,7 +54,7 @@ private:
 	void InitializeSwapchain();
 	//RenderTarget
 	void InitializeRenderTargetView();
-	//
+	//Depth
 	void InitializeDepthBuffer();
 	//Fence
 	void InitializeFence();

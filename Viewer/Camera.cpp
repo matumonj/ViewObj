@@ -11,7 +11,7 @@ Camera* Camera::GetIns()
 
 void Camera::ParamInit()
 {
-	eye = XMFLOAT3(0, 0, -800);
+	eye = XMFLOAT3(0, 0, -500);
 	target = XMFLOAT3(0, 0, 0);
 	upvec = XMFLOAT3(0, 1, 0);
 

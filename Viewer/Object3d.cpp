@@ -1,4 +1,4 @@
-#include "Object3d.h"
+ï»¿#include "Object3d.h"
 #include <cassert>
 #include "Camera.h"
 #include "d3dx12.h"
@@ -8,7 +8,7 @@ bool Object3d::SetDevice(ID3D12Device* device)
 {
 	m_Device = device;
 
-	//ƒfƒoƒCƒX‚ÌƒZƒbƒg(null)
+	//ãƒ‡ãƒã‚¤ã‚¹ã®ã‚»ãƒƒãƒˆ(nullæ™‚)
 	if(m_Device==nullptr)
 	{
 		assert(0);
@@ -22,7 +22,7 @@ bool Object3d::SetCommandList(ID3D12GraphicsCommandList* cmdlist)
 {
 	m_CmdList = cmdlist;
 
-	//ƒRƒ}ƒ“ƒhƒŠƒXƒg‚ÌƒZƒbƒg(null)
+	//ã‚³ãƒãƒ³ãƒ‰ãƒªã‚¹ãƒˆã®ã‚»ãƒƒãƒˆ(nullæ™‚)
 	if(m_CmdList==nullptr)
 	{
 		return false;
@@ -31,122 +31,88 @@ bool Object3d::SetCommandList(ID3D12GraphicsCommandList* cmdlist)
 }
 
 //
-// ‹¤’Ê•”•ª‚Ì‰Šú‰»
+// å…±é€šéƒ¨åˆ†ã®åˆæœŸåŒ–
 //
 void Object3d::CommonInit(ReadBinary* binary)
 {
+	VertexData v1{ {} ,{} };
+	//å¾Œã«ãƒã‚¤ãƒŠãƒªãƒ‡ãƒ¼ã‚¿ã‹ã‚‰ã®èª­ã¿è¾¼ã¿ã«å¤‰ãˆã‚‹ //{{é ‚ç‚¹åº§æ¨™},{æ³•ç·š}}
 	indeces = binary->GetIndexData();
 	for (size_t i = 0; i < binary->GetVerticesData().size(); i++) {
-		vertices.emplace_back(VertexData({ {binary->GetVerticesData()[i]}, {}}));
+		vertices.emplace_back(VertexData({ {binary->GetVerticesData()[i].x,binary->GetVerticesData()[i].y,binary->GetVerticesData()[i].z}, {binary->GetNormalData()[i / 3]} }));
 	}
-	//–@ü
+	//æ³•ç·š
 	for (size_t i = 0; i < vertices.size(); i++) {
-	//	vertices[i].Normal_ = binary->GetNormalData()[i / 3];
-		//OŠpŒ`‚ÌƒCƒ“ƒfƒbƒNƒX”²‚­
-		unsigned short index0 = indeces[i / 3 * 3 + 0];
-		unsigned short index1 = indeces[i / 3 * 3 + 1];
-		unsigned short index2 = indeces[i / 3 * 3 + 2];
-
-		//OŠpŒ`‚Ì\¬’¸“_”²‚«o‚·
-		XMVECTOR p0 = XMLoadFloat3(&vertices[index0].Pos_);
-		XMVECTOR p1 = XMLoadFloat3(&vertices[index1].Pos_);
-		XMVECTOR p2 = XMLoadFloat3(&vertices[index2].Pos_);
-
-		//2•Ó‚ÌƒxƒNƒgƒ‹
-		XMVECTOR v1 = XMVectorSubtract(p1, p0);
-		XMVECTOR v2 = XMVectorSubtract(p2, p0);
-
-		//ŠOÏZoŒã–@ü‹‚ß‚é
-		XMVECTOR normal = XMVector3Cross(v1, v2);
-		//³‹K‰»
-		normal = XMVector3Normalize(normal);
-		//’¸“_ƒf[ƒ^‚Ì‘ã“ü
-		XMStoreFloat3(&vertices[index0].Normal_,normal );
-		XMStoreFloat3(&vertices[index1].Normal_, { normal });
-		XMStoreFloat3(&vertices[index2].Normal_, { normal });
+		vertices[i].Normal_ = binary->GetNormalData()[i/3];
 	}
-	VertexData v1{ {} ,{} };
-	//Œã‚ÉƒoƒCƒiƒŠƒf[ƒ^‚©‚ç‚Ì“Ç‚İ‚İ‚É•Ï‚¦‚é //{{’¸“_À•W},{–@ü}}
-	//vertices.emplace_back(VertexData({ { XMFLOAT3(-20.f, -20.5f, 0.f) },{XMFLOAT3(0,0,0)} }));
-	//vertices.emplace_back(VertexData({ { XMFLOAT3(-20.f, +20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
-	//vertices.emplace_back(VertexData({ { XMFLOAT3(20.f, -20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
-	//vertices.emplace_back(VertexData({ { XMFLOAT3(20.f, 20.5f, 0.f)},{XMFLOAT3(0,0,0)} }));
 
-	//ƒCƒ“ƒfƒbƒNƒX(lŠpŒ`)
-	//indeces.emplace_back(0);
-	//indeces.emplace_back(1);
-	//indeces.emplace_back(2);
-	//indeces.emplace_back(1);
-	//indeces.emplace_back(2);
-	//indeces.emplace_back(3);
-	
-	//ƒpƒCƒvƒ‰ƒCƒ“İ’èŠÖ”—pƒCƒ“ƒX
+	//ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³è¨­å®šé–¢æ•°ç”¨ã‚¤ãƒ³ã‚¹
 	m_PipelineSet = std::make_unique<PipelineSetting>();
-	//’è”ƒoƒbƒtƒ@‚Éƒf[ƒ^“]‘—
+	//å®šæ•°ãƒãƒƒãƒ•ã‚¡ã«ãƒ‡ãƒ¼ã‚¿è»¢é€
 	ConstBufferSetting();
-	//’¸“_EƒCƒ“ƒfƒbƒNƒX
+	//é ‚ç‚¹ãƒ»ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
 	CreateVBView();
-	//ƒVƒF[ƒ_ü‚è
+	//ã‚·ã‚§ãƒ¼ãƒ€å‘¨ã‚Š
 	ShaderSetting();
-	//ƒpƒCƒvƒ‰ƒCƒ“
+	//ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³
 	CreatePipelineState();
 }
 
 //
-// XV
+// æ›´æ–°
 //
 void Object3d::Update()
 {
 	HRESULT result = S_FALSE;
 
-	// ’è”ƒoƒbƒtƒ@‚Ö‚Ìƒf[ƒ^“]‘—
+	// å®šæ•°ãƒãƒƒãƒ•ã‚¡ã¸ã®ãƒ‡ãƒ¼ã‚¿è»¢é€
 	ConstBuffer* constMap = nullptr;
 	result = constBuffer->Map(0, nullptr, (void**)&constMap);
-	constMap->Color_ = this->Color_;//F
+	constMap->Color_ = this->Color_;//è‰²
 
 	
-	//ƒ[ƒ‹ƒhÀ•W‹‚ß‚é
+	//ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™æ±‚ã‚ã‚‹
 	XMMATRIX matWorld, matScale, matRot,matTrans;
-	matWorld = XMMatrixIdentity();//’PˆÊs—ñ
-	//Šg‘åEk¬
+	matWorld = XMMatrixIdentity();//å˜ä½è¡Œåˆ—
+	//æ‹¡å¤§ãƒ»ç¸®å°
 	matScale = XMMatrixScaling(Scl_.x, Scl_.y,Scl_.z);
 	matWorld *= matScale;
-	// ‰ñ“]
+	// å›è»¢
 	matRot = XMMatrixIdentity();
 	matRot *= XMMatrixRotationX(XMConvertToRadians(Rot_.x));
 	matRot *= XMMatrixRotationY(XMConvertToRadians(Rot_.y));
 	matRot *= XMMatrixRotationZ(XMConvertToRadians(Rot_.z));
 	matWorld *= matRot;
-	// •½sˆÚ“®
+	// å¹³è¡Œç§»å‹•
 	matTrans = XMMatrixTranslation(Pos_.x, Pos_.y, Pos_.z);
 	matWorld *= matTrans;
 
-	//ƒ[ƒ‹ƒhs—ñ‚ÉƒJƒƒ‰‚©‚ç‚Ìƒrƒ…[ƒvƒƒWƒFƒNƒVƒ‡ƒ“s—ñ‚©‚¯‚é
+	//ãƒ¯ãƒ¼ãƒ«ãƒ‰è¡Œåˆ—ã«ã‚«ãƒ¡ãƒ©ã‹ã‚‰ã®ãƒ“ãƒ¥ãƒ¼ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ã‚·ãƒ§ãƒ³è¡Œåˆ—ã‹ã‘ã‚‹
 	constMap->Mat_ = matWorld*Camera::GetIns()->GetMatViewProj();
 	
-	constBuffer->Unmap(0, nullptr);//ƒ}ƒbƒv‰ğœ
+	constBuffer->Unmap(0, nullptr);//ãƒãƒƒãƒ—è§£é™¤
 }
 
 //
-// ’¸“_ƒoƒbƒtƒ@ƒrƒ…[ì¬
+// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼ä½œæˆ
 //
 void Object3d::CreateVBView()
 {
 	HRESULT result = S_FALSE;
 
-	//ƒvƒƒpƒeƒBİ’è
+	//ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£è¨­å®š
 	D3D12_HEAP_PROPERTIES heap_properties = {};
 	heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
 	heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-	//’¸“_ƒf[ƒ^‚ÌƒTƒCƒYæ“¾
+	//é ‚ç‚¹ãƒ‡ãƒ¼ã‚¿ã®ã‚µã‚¤ã‚ºå–å¾—
 	UINT sizeVB = static_cast<UINT>(sizeof(VertexData) * vertices.size());
 
-	//ƒŠƒ\[ƒXƒfƒXƒNİ’è
+	//ãƒªã‚½ãƒ¼ã‚¹ãƒ‡ã‚¹ã‚¯è¨­å®š
 	D3D12_RESOURCE_DESC resource_desc = {};
 	resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	//’¸“_î•ñ
+	//é ‚ç‚¹æƒ…å ±
 	resource_desc.Width = sizeVB;
 	resource_desc.Height = 1;
 	resource_desc.DepthOrArraySize = 1;
@@ -157,7 +123,7 @@ void Object3d::CreateVBView()
 	resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
 
-	//’¸“_ƒoƒbƒtƒ@İ’è
+	//é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 	ID3D12Resource* vertexBuffer = nullptr;
 
 	result = m_Device->CreateCommittedResource(
@@ -168,37 +134,37 @@ void Object3d::CreateVBView()
 		nullptr,
 		IID_PPV_ARGS(&vertexBuffer));
 
-	//–ß‚è’lƒ`ƒFƒbƒN
+	//æˆ»ã‚Šå€¤ãƒã‚§ãƒƒã‚¯
 	if (FAILED(result)) {
 		assert(0);
 	}
 
 
-	//ƒoƒbƒtƒ@[‚É’¸“_î•ñƒRƒs[
+	//ãƒãƒƒãƒ•ã‚¡ãƒ¼ã«é ‚ç‚¹æƒ…å ±ã‚³ãƒ”ãƒ¼
 	VertexData* vertMap = nullptr;
 	result = vertexBuffer->Map(0, nullptr, (void**)&vertMap);
 	
-	//’¸“_‚Ìƒf[ƒ^ƒRƒs[
+	//é ‚ç‚¹ã®ãƒ‡ãƒ¼ã‚¿ã‚³ãƒ”ãƒ¼
 	for (size_t i = 0; i < vertices.size(); i++) {
 		vertMap[i] = vertices[i];
 	}
 	vertexBuffer->Unmap(0, nullptr);
 	
-	//ƒoƒbƒtƒ@‚Ì‰¼‘zƒAƒhƒŒƒX
+	//ãƒãƒƒãƒ•ã‚¡ã®ä»®æƒ³ã‚¢ãƒ‰ãƒ¬ã‚¹
 	vertex_buffer_view.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-	//’¸“_‚Ì‘SƒoƒCƒg”
+	//é ‚ç‚¹ã®å…¨ãƒã‚¤ãƒˆæ•°
 	vertex_buffer_view.SizeInBytes = sizeVB;
-	//1’¸“_‚ ‚½‚è‚Ì
+	//1é ‚ç‚¹ã‚ãŸã‚Šã®
 	vertex_buffer_view.StrideInBytes = sizeof(VertexData);
 
-	//ƒCƒ“ƒfƒbƒNƒXƒoƒbƒtƒ@İ’è
+	//ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒãƒƒãƒ•ã‚¡è¨­å®š
 	ID3D12Resource* indexBuffer = nullptr;
 
-	//ƒCƒ“ƒfƒbƒNƒX‚ÌƒTƒCƒYæ“¾
+	//ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®ã‚µã‚¤ã‚ºå–å¾—
 	UINT sizeIB = static_cast<UINT>(sizeof(int) * indeces.size());
 	resource_desc.Width = sizeIB;
 
-	//ƒoƒbƒtƒ@‚Éƒf[ƒ^“]‘—
+	//ãƒãƒƒãƒ•ã‚¡ã«ãƒ‡ãƒ¼ã‚¿è»¢é€
 	result = m_Device->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
@@ -207,14 +173,14 @@ void Object3d::CreateVBView()
 		nullptr,
 		IID_PPV_ARGS(&indexBuffer));
 
-	//ì‚Á‚½ƒoƒbƒtƒ@‚ÉƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ğƒRƒs[
+	//ä½œã£ãŸãƒãƒƒãƒ•ã‚¡ã«ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãƒ‡ãƒ¼ã‚¿ã‚’ã‚³ãƒ”ãƒ¼
 	unsigned short* IndexMap = nullptr;
 	indexBuffer->Map(0, nullptr, (void**)&IndexMap);
 	std::copy(std::begin(indeces), std::end(indeces), IndexMap);
 
-	indexBuffer->Unmap(0, nullptr);//ƒ}ƒbƒv‰ğœ
+	indexBuffer->Unmap(0, nullptr);//ãƒãƒƒãƒ—è§£é™¤
 
-	//ƒoƒbƒtƒ@ƒrƒ…[İ’è
+	//ãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼è¨­å®š
 	ibView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
 	ibView.Format = DXGI_FORMAT_R16_UINT;
 	ibView.SizeInBytes = sizeIB;
@@ -222,16 +188,16 @@ void Object3d::CreateVBView()
 }
 
 //
-//’è”ƒoƒbƒtƒ@İ’è
+//å®šæ•°ãƒãƒƒãƒ•ã‚¡è¨­å®š
 //
 void Object3d::ConstBufferSetting()
 {
 	HRESULT result = S_FALSE;
 
-	// ƒq[ƒvİ’è
+	// ãƒ’ãƒ¼ãƒ—è¨­å®š
 	D3D12_HEAP_PROPERTIES cbheap{};
 	cbheap.Type = D3D12_HEAP_TYPE_UPLOAD;
-	// ƒŠƒ\[ƒXİ’è
+	// ãƒªã‚½ãƒ¼ã‚¹è¨­å®š
 	D3D12_RESOURCE_DESC cbresdesc{};
 	cbresdesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	cbresdesc.Width = (sizeof(ConstBuffer) + 0xff) & ~0xff;
@@ -249,14 +215,14 @@ void Object3d::ConstBufferSetting()
 		nullptr,
 		IID_PPV_ARGS(&constBuffer));
 
-	// ’è”ƒoƒbƒtƒ@‚Ö‚Ìƒf[ƒ^“]‘—
+	// å®šæ•°ãƒãƒƒãƒ•ã‚¡ã¸ã®ãƒ‡ãƒ¼ã‚¿è»¢é€
 	ConstBuffer* constMap = nullptr;
 	result = constBuffer->Map(0, nullptr, (void**)&constMap);
-	constMap->Color_ = XMFLOAT4(0, 0, 0, 1);//F
+	constMap->Color_ = XMFLOAT4(0, 0, 0, 1);//è‰²
 
 	{
-		constMap->Mat_ = XMMatrixIdentity();//s—ñ
-		//“§‹“Š‰e•ÏŠ·s—ñ
+		constMap->Mat_ = XMMatrixIdentity();//è¡Œåˆ—
+		//é€è¦–æŠ•å½±å¤‰æ›è¡Œåˆ—
 		constMap->Mat_ = Camera::GetIns()->GetMatViewProj();
 	}
 	constBuffer->Unmap(0, nullptr);
@@ -264,8 +230,8 @@ void Object3d::ConstBufferSetting()
 	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc{};
 	descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	descHeapDesc.NumDescriptors = 1;//’è”ƒoƒbƒtƒ@‚Ì”
-	// ¶¬
+	descHeapDesc.NumDescriptors = 1;//å®šæ•°ãƒãƒƒãƒ•ã‚¡ã®æ•°
+	// ç”Ÿæˆ
 	result = m_Device->CreateDescriptorHeap(
 		&descHeapDesc, IID_PPV_ARGS(&cbvDescHeap));
 
@@ -277,16 +243,16 @@ void Object3d::ConstBufferSetting()
 }
 
 //
-// ƒVƒF[ƒ_ü‚è‚Ìİ’è
+// ã‚·ã‚§ãƒ¼ãƒ€å‘¨ã‚Šã®è¨­å®š
 //
 void Object3d::ShaderSetting()
 {
 	HRESULT result = S_FALSE;
 
-	//ƒVƒF[ƒ_“Ç‚İ‚İ
+	//ã‚·ã‚§ãƒ¼ãƒ€èª­ã¿è¾¼ã¿
 	result = m_PipelineSet->ShaderSetting();
 
-	//–ß‚è’lƒ`ƒFƒbƒN
+	//æˆ»ã‚Šå€¤ãƒã‚§ãƒƒã‚¯
 	if (FAILED(result)) {
 		assert(0);
 	}
@@ -306,20 +272,20 @@ void Object3d::CreatePipelineState()
 
 
 //
-// ƒrƒ…[ƒ|[ƒgİ’è
+// ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆè¨­å®š
 //
 void Object3d::ViewPortsetting()
 {
-	//ƒEƒBƒ“ƒhƒE‚Ì‘å‚«‚³
+	//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å¤§ãã•
 	constexpr float window_w = 980;
 	constexpr float window_h = 720;
 
-	//‰æ–ÊƒTƒCƒYE¶ãÀ•W
+	//ç”»é¢ã‚µã‚¤ã‚ºãƒ»å·¦ä¸Šåº§æ¨™
 	viewport.Width = window_w;
 	viewport.Height = window_h;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
-	//[“x’l‚ÌÅ‘åEÅ¬
+	//æ·±åº¦å€¤ã®æœ€å¤§ãƒ»æœ€å°
 	viewport.MaxDepth = 1.0f;
 	viewport.MinDepth = 0.f;
 
@@ -329,7 +295,7 @@ void Object3d::ViewPortsetting()
 
 void Object3d::ScissorSetting()
 {
-	//ƒEƒBƒ“ƒhƒE‚Ì‘å‚«‚³
+	//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®å¤§ãã•
 	constexpr LONG window_w = 980;
 	constexpr LONG window_h = 720;
 
@@ -348,17 +314,17 @@ void Object3d::BeginDraw()
 
 	m_CmdList->SetPipelineState(m_PipelineSet->GetPipelineState());
 
-	//ƒrƒ…[ƒ|[ƒgEƒVƒU[‹éŒ`İ’è
+	//ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆãƒ»ã‚·ã‚¶ãƒ¼çŸ©å½¢è¨­å®š
 	ViewPortsetting();
 	ScissorSetting();
 
-	//ƒ‹[ƒƒVƒOƒlƒ`ƒƒ“]‘—
+	//ãƒ«ãƒ¼ãƒ­ã‚·ã‚°ãƒãƒãƒ£è»¢é€
 	m_CmdList->SetGraphicsRootSignature(m_PipelineSet->GetRootSig());
 
-	//ƒfƒXƒNƒŠƒvƒ^ƒq[ƒv
+	//ãƒ‡ã‚¹ã‚¯ãƒªãƒ—ã‚¿ãƒ’ãƒ¼ãƒ—
 	ID3D12DescriptorHeap* ppHeap[] = { cbvDescHeap.Get() };
 	m_CmdList->SetDescriptorHeaps(_countof(ppHeap), ppHeap);
-	//’è”ƒoƒbƒtƒ@ƒrƒ…[ƒZƒbƒg
+	//å®šæ•°ãƒãƒƒãƒ•ã‚¡ãƒ“ãƒ¥ãƒ¼ã‚»ãƒƒãƒˆ
 	m_CmdList->SetGraphicsRootDescriptorTable(0, cbvDescHeap->GetGPUDescriptorHandleForHeapStart());
 	m_CmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_CmdList->IASetVertexBuffers(0, 1, &vertex_buffer_view);
